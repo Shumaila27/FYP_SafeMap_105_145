@@ -4,7 +4,8 @@ import '../../utils/app_colors.dart';
 import '../../utils/text_style.dart';
 import '../widgets/buttons.dart'; // ✅ For your customizable button
 import '../widgets/header.dart';
-import '../widgets/text_fields.dart'; // ✅ Import your CustomTextField
+import '../widgets/text_fields.dart';
+import 'home_page.dart'; // ✅ Import your CustomTextField
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
@@ -72,7 +73,8 @@ class LoginScreen extends StatelessWidget {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const LoginScreen()),
+                    //MaterialPageRoute(builder: (context) => const LoginScreen()),
+                    MaterialPageRoute(builder: (context) => const SafeSpotHomeScreen()),//for trying we have placed otherwise login to signup
                   );
                 },
               ),
