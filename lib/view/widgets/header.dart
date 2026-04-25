@@ -49,17 +49,21 @@ class WavyHeaderPainter extends CustomPainter {
 /// ✅ Main Auth Header Widget (with optional back button)
 class AuthHeader extends StatelessWidget {
   final bool showBackButton;
+  final double? height;
+  final double? topWaveHeight;
 
   const AuthHeader({
     super.key,
     this.showBackButton = true,
+    this.height,
+    this.topWaveHeight,
   });
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
       width: double.infinity,
-      height: 180.h, // Height of header
+      height: height ?? 180.h,
       child: Stack(
         children: [
           // ✅ Light wave (background)
@@ -75,7 +79,7 @@ class AuthHeader extends StatelessWidget {
             left: 0,
             right: 0,
             child: SizedBox(
-              height: 150.h,
+              height: topWaveHeight ?? 150.h,
               child: CustomPaint(
                 painter: WavyHeaderPainter(AppColor.appSecondary),
               ),
