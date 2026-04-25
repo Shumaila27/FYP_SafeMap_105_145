@@ -8,6 +8,7 @@ class AppTextStyle {
       fontSize: 20.sp, // responsive
       fontWeight: FontWeight.bold,
       color: color,
+      fontFamily: 'Poppins',
     );
   }
 
@@ -17,6 +18,7 @@ class AppTextStyle {
       fontSize: 18.sp,
       fontWeight: FontWeight.w600,
       color: color,
+      fontFamily: 'Poppins',
     );
   }
 
@@ -26,6 +28,7 @@ class AppTextStyle {
       fontSize: 16.sp,
       fontWeight: FontWeight.w500,
       color: color,
+      fontFamily: 'Poppins',
     );
   }
 
@@ -35,6 +38,7 @@ class AppTextStyle {
       fontSize: 14.sp,
       fontWeight: FontWeight.w400,
       color: color,
+      fontFamily: 'Poppins',
     );
   }
 
@@ -44,6 +48,7 @@ class AppTextStyle {
       fontSize: 12.sp,
       fontWeight: FontWeight.w300,
       color: color,
+      fontFamily: 'Poppins',
     );
   }
 }

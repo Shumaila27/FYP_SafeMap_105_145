@@ -35,6 +35,15 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
   flutter_screenutil: ^5.9.3
+  provider: ^6.1.5+1
+  lucide_icons_flutter: ^3.1.6
+
+  geolocator: ^10.1.0
+  geocoding: ^2.1.0
+  flutter_map: ^8.2.2
+  latlong2: ^0.9.1
+  image_picker: ^1.2.1
+  url_launcher: ^6.3.0
 
 dev_dependencies:
   flutter_test:
@@ -60,10 +69,9 @@ flutter:
 
   # To add assets to your application, add an assets section, like this:
   assets:
-    - assets/logo/img.png
-    - assets/logo/google-logo.webp
     - assets/logo.png
-    - assets/mock_map.jpeg
+    - assets/logo/google-logo.webp
+
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
