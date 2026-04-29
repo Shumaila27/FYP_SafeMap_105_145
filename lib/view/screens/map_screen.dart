@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../Models/map_model.dart';
 import '../widgets/app_bar.dart';
 import '../widgets/pani_button.dart';
+import '../../utils/app_colors.dart';
 
 class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
@@ -30,15 +31,18 @@ class _MapScreenState extends State<MapScreen> {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       appBar: const AppMainBar(showBack: true),
+      backgroundColor: colorScheme.surface,
       body: Column(
         children: [
           // 🔍 Search + Location Header
           Container(
             padding: const EdgeInsets.all(16),
-            color: Colors.white,
+            color: colorScheme.surfaceContainerLowest,
             child: Column(
               children: [
                 TextField(
@@ -47,21 +51,29 @@ class _MapScreenState extends State<MapScreen> {
                       searchQuery = value;
                     });
                   },
+                  style: TextStyle(color: AppColor.getTextPrimary(context)),
                   decoration: InputDecoration(
-                    prefixIcon: const Icon(Icons.search, color: Colors.grey),
+                    prefixIcon: Icon(Icons.search, color: AppColor.getIconSecondary(context)),
                     hintText: "Search location or area...",
+                    hintStyle: TextStyle(color: AppColor.getTextTertiary(context)),
+                    filled: true,
+                    fillColor: AppColor.getContainerBackground(context),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Colors.grey),
+                      borderSide: BorderSide(color: AppColor.getContainerBorder(context)),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: AppColor.getContainerBorder(context)),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Colors.purple),
+                      borderSide: BorderSide(color: AppColor.getInteractivePrimary(context)),
                     ),
                     suffixIcon: searchQuery.isNotEmpty
                         ? IconButton(
                             onPressed: () => setState(() => searchQuery = ''),
-                            icon: const Icon(Icons.close, color: Colors.grey),
+                            icon: Icon(Icons.close, color: AppColor.getIconSecondary(context)),
                           )
                         : null,
                   ),
@@ -72,11 +84,25 @@ class _MapScreenState extends State<MapScreen> {
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFFEDE9FE), Color(0xFFFCE7F3)],
+                    gradient: LinearGradient(
+                      colors: isDark
+                          ? [const Color(0xFF1E293B), const Color(0xFF0F172A)]
+                          : [const Color(0xFFEDE9FE), const Color(0xFFFCE7F3)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                     ),
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.purple.shade200),
+                    border: Border.all(
+                      color: isDark ? Colors.teal.shade700 : Colors.purple.shade200,
+                      width: 1.5,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -84,17 +110,22 @@ class _MapScreenState extends State<MapScreen> {
                       // Location Text
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        children: const [
+                        children: [
                           Text(
                             "Current Location",
-                            style: TextStyle(fontSize: 14, color: Colors.grey),
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: isDark ? AppColor.teal300 : Colors.purple.shade700,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
-                          SizedBox(height: 4),
+                          const SizedBox(height: 4),
                           Text(
                             "Gulgashat, Multan",
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
+                              color: AppColor.getTextPrimary(context),
                             ),
                           ),
                         ],
@@ -103,27 +134,36 @@ class _MapScreenState extends State<MapScreen> {
                       // Safety Score
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.end,
-                        children: const [
+                        children: [
                           Row(
+                            crossAxisAlignment: CrossAxisAlignment.baseline,
+                            textBaseline: TextBaseline.alphabetic,
                             children: [
                               Text(
                                 "78",
                                 style: TextStyle(
                                   fontSize: 32,
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.green,
+                                  color: isDark ? AppColor.teal400 : Colors.green.shade600,
                                 ),
                               ),
-                              SizedBox(width: 4),
+                              const SizedBox(width: 4),
                               Text(
                                 "/100",
-                                style: TextStyle(color: Colors.grey),
+                                style: TextStyle(
+                                  color: AppColor.getTextSecondary(context),
+                                  fontSize: 14,
+                                ),
                               ),
                             ],
                           ),
                           Text(
                             "Safety Score",
-                            style: TextStyle(fontSize: 12, color: Colors.grey),
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: AppColor.getTextSecondary(context),
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ],
                       ),
@@ -140,9 +180,11 @@ class _MapScreenState extends State<MapScreen> {
               children: [
                 // Background gradient
                 Container(
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
                     gradient: LinearGradient(
-                      colors: [Color(0xFFF1F5F9), Color(0xFFF8FAFC)],
+                      colors: isDark
+                          ? const [Color(0xFF0F172A), Color(0xFF111827)]
+                          : const [Color(0xFFF1F5F9), Color(0xFFF8FAFC)],
                     ),
                   ),
                 ),
@@ -164,24 +206,16 @@ class _MapScreenState extends State<MapScreen> {
                         width: 20,
                         height: 20,
                         decoration: BoxDecoration(
-                          color: Colors.purple,
+                          color: AppColor.teal400,
                           borderRadius: BorderRadius.circular(50),
                           border: Border.all(color: Colors.white, width: 4),
-                          boxShadow: const [
+                          boxShadow: [
                             BoxShadow(
-                              color: Colors.black26,
-                              blurRadius: 6,
-                              offset: Offset(0, 3),
+                              color: Colors.teal.withValues(alpha: 0.4),
+                              blurRadius: 12,
+                              spreadRadius: 4,
                             ),
                           ],
-                        ),
-                      ),
-                      Container(
-                        width: 20,
-                        height: 20,
-                        decoration: BoxDecoration(
-                          color: Colors.purple.withOpacity(0.5),
-                          borderRadius: BorderRadius.circular(50),
                         ),
                       ),
                     ],
@@ -208,7 +242,7 @@ class _MapScreenState extends State<MapScreen> {
                             decoration: BoxDecoration(
                               color: getSeverityColor(
                                 incident.severity,
-                              ).withOpacity(0.7),
+                              ).withValues(alpha: 0.7),
                               borderRadius: BorderRadius.circular(50),
                             ),
                           ),
@@ -231,7 +265,7 @@ class _MapScreenState extends State<MapScreen> {
                     width: 160,
                     height: 160,
                     decoration: BoxDecoration(
-                      color: Colors.red.withOpacity(0.2),
+                      color: Colors.red.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(100),
                     ),
                   ),
@@ -243,7 +277,7 @@ class _MapScreenState extends State<MapScreen> {
                     width: 180,
                     height: 180,
                     decoration: BoxDecoration(
-                      color: Colors.orange.withOpacity(0.15),
+                      color: Colors.orange.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(100),
                     ),
                   ),
@@ -256,30 +290,32 @@ class _MapScreenState extends State<MapScreen> {
                   child: Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: AppColor.getContainerBackground(context),
                       borderRadius: BorderRadius.circular(16),
-                      boxShadow: const [
+                      border: Border.all(color: AppColor.getContainerBorder(context)),
+                      boxShadow: [
                         BoxShadow(
-                          color: Colors.black12,
+                          color: Colors.black.withValues(alpha: 0.12),
                           blurRadius: 8,
-                          offset: Offset(0, 4),
+                          offset: const Offset(0, 4),
                         ),
                       ],
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           "Risk Levels",
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 12,
+                            color: AppColor.getTextPrimary(context),
                           ),
                         ),
                         const SizedBox(height: 8),
-                        _legendDot(Colors.red, "High Risk"),
-                        _legendDot(Colors.orange, "Medium"),
-                        _legendDot(Colors.yellow, "Low Risk"),
+                        _legendDot(Colors.red, "High Risk", context),
+                        _legendDot(Colors.orange, "Medium", context),
+                        _legendDot(Colors.yellow, "Low Risk", context),
                       ],
                     ),
                   ),
@@ -296,11 +332,12 @@ class _MapScreenState extends State<MapScreen> {
       // Incident Popup Dialog Trigger FAB
       floatingActionButton: selectedIncident != null
           ? FloatingActionButton(
-              child: const Icon(Icons.info),
+              backgroundColor: AppColor.getInteractivePrimary(context),
+              child: const Icon(Icons.info, color: Colors.white),
               onPressed: () {
                 showDialog(
                   context: context,
-                  builder: (_) => _incidentDialog(selectedIncident!),
+                  builder: (_) => _incidentDialog(selectedIncident!, context),
                 );
               },
             )
@@ -309,9 +346,13 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   // Incident Dialog
-  Widget _incidentDialog(Incident incident) {
+  Widget _incidentDialog(Incident incident, BuildContext context) {
     return AlertDialog(
-      title: const Text("Incident Details"),
+      backgroundColor: AppColor.getContainerBackground(context),
+      title: Text(
+        "Incident Details",
+        style: TextStyle(color: AppColor.getTextPrimary(context)),
+      ),
       content: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -335,6 +376,7 @@ class _MapScreenState extends State<MapScreen> {
                     style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
+                      fontSize: 10,
                     ),
                   ),
                 ),
@@ -346,11 +388,15 @@ class _MapScreenState extends State<MapScreen> {
                   ),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.grey.shade300),
+                    border: Border.all(color: AppColor.getContainerBorder(context)),
                   ),
                   child: Text(
                     incident.type,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: AppColor.getTextPrimary(context),
+                      fontSize: 12,
+                    ),
                   ),
                 ),
               ],
@@ -360,28 +406,36 @@ class _MapScreenState extends State<MapScreen> {
             Text(
               "Description",
               style: TextStyle(
-                color: Colors.grey.shade700,
+                color: AppColor.getTextSecondary(context),
                 fontWeight: FontWeight.w600,
+                fontSize: 13,
               ),
             ),
-            Text(incident.description),
+            Text(
+              incident.description,
+              style: TextStyle(color: AppColor.getTextPrimary(context)),
+            ),
             const SizedBox(height: 10),
 
             Text(
               "Reported",
               style: TextStyle(
-                color: Colors.grey.shade700,
+                color: AppColor.getTextSecondary(context),
                 fontWeight: FontWeight.w600,
+                fontSize: 13,
               ),
             ),
-            Text(incident.time),
+            Text(
+              incident.time,
+              style: TextStyle(color: AppColor.getTextPrimary(context)),
+            ),
             const SizedBox(height: 15),
 
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.amber.shade50,
-                border: Border.all(color: Colors.amber.shade200),
+                color: Colors.amber.withValues(alpha: 0.1),
+                border: Border.all(color: Colors.amber.withValues(alpha: 0.3)),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: const Text(
@@ -389,6 +443,7 @@ class _MapScreenState extends State<MapScreen> {
                 style: TextStyle(
                   fontWeight: FontWeight.w600,
                   color: Colors.amber,
+                  fontSize: 12,
                 ),
               ),
             ),
@@ -397,14 +452,17 @@ class _MapScreenState extends State<MapScreen> {
       ),
       actions: [
         TextButton(
-          child: const Text("Close"),
+          child: Text(
+            "Close",
+            style: TextStyle(color: AppColor.getInteractivePrimary(context)),
+          ),
           onPressed: () => Navigator.pop(context),
         ),
       ],
     );
   }
 
-  Widget _legendDot(Color color, String label) {
+  Widget _legendDot(Color color, String label, BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 4),
       child: Row(
@@ -420,7 +478,11 @@ class _MapScreenState extends State<MapScreen> {
           const SizedBox(width: 4),
           Text(
             label,
-            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: AppColor.getTextSecondary(context),
+            ),
           ),
         ],
       ),
@@ -434,7 +496,7 @@ class GridPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     const step = 40.0;
     final paint = Paint()
-      ..color = Colors.grey.withOpacity(0.1)
+      ..color = Colors.grey.withValues(alpha: 0.1)
       ..strokeWidth = 1;
 
     for (double x = 0; x <= size.width; x += step) {

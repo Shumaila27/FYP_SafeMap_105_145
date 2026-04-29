@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:staysafe/view/screens/registration_screens/login_screen.dart';
-import '../../utils/app_colors.dart';
+import 'package:staysafe/view/screens/settings_screen.dart';
 import '../../utils/text_style.dart';
 
 class AppMainBar extends StatelessWidget implements PreferredSizeWidget {
@@ -14,10 +13,11 @@ class AppMainBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return AppBar(
-      backgroundColor: AppColor.appSecondary,
+      backgroundColor: colorScheme.primary,
       elevation: 3,
-      shadowColor: Colors.grey.withOpacity(0.25),
+      shadowColor: Colors.black.withValues(alpha: 0.25),
 
       automaticallyImplyLeading: false,
 
@@ -27,7 +27,11 @@ class AppMainBar extends StatelessWidget implements PreferredSizeWidget {
           // ✅ Back Button (only when showBack = true)
           if (showBack)
             IconButton(
-              icon: Icon(Icons.arrow_back, color: Colors.white, size: 26.sp),
+              icon: Icon(
+                Icons.arrow_back,
+                color: colorScheme.onPrimary,
+                size: 26.sp,
+              ),
               onPressed: () {
                 Navigator.pop(context);
               },
@@ -49,18 +53,18 @@ class AppMainBar extends StatelessWidget implements PreferredSizeWidget {
           SizedBox(width: 10.w),
 
           // ✅ App Name
-          Text("SafeSpot", style: AppTextStyle.bold(color: Colors.white)),
+          Text("SafeMap", style: AppTextStyle.bold(color: colorScheme.onPrimary)),
         ],
       ),
 
       // ✅ Settings Icon
       actions: [
         IconButton(
-          icon: Icon(Icons.settings, color: Colors.white, size: 28.sp),
+          icon: Icon(Icons.settings, color: colorScheme.onPrimary, size: 28.sp),
           onPressed: () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => const LoginScreen()),
+              MaterialPageRoute(builder: (_) => const SettingsScreen()),
             );
           },
         ),

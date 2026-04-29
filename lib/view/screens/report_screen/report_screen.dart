@@ -14,22 +14,27 @@ class ReportScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<ReportController>(
       builder: (context, controller, _) {
+        final colorScheme = Theme.of(context).colorScheme;
+        final isDark = Theme.of(context).brightness == Brightness.dark;
         if (controller.isSubmitted) {
           // Success Screen
           return Scaffold(
-            backgroundColor: Colors.green[50],
+            backgroundColor: isDark ? const Color(0xFF0F1F1A) : Colors.green[50],
             body: Center(
               child: Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColor.getContainerBackground(context),
                   borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: Colors.green[200]!, width: 2),
-                  boxShadow: const [
+                  border: Border.all(
+                    color: isDark ? Colors.green[800]! : Colors.green[200]!,
+                    width: 2,
+                  ),
+                  boxShadow: [
                     BoxShadow(
-                      color: Colors.black12,
+                      color: Colors.black.withValues(alpha: 0.1),
                       blurRadius: 12,
-                      offset: Offset(0, 4),
+                      offset: const Offset(0, 4),
                     ),
                   ],
                 ),
@@ -42,7 +47,7 @@ class ReportScreen extends StatelessWidget {
                       height: 80,
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
-                          colors: [AppColor.appSecondary, AppColor.appPrimary],
+                          colors: AppColor.getPrimaryGradient(context),
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                         ),
@@ -60,15 +65,18 @@ class ReportScreen extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
-                        color: Colors.teal[700],
+                        color: isDark ? Colors.teal[300] : Colors.teal[700],
                       ),
                     ),
                     const SizedBox(height: 8),
-                    const Text(
+                    Text(
                       "Thank you for contributing to community safety. "
                       "Your anonymous report has been added to the map.",
                       textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 14, color: Colors.black),
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: AppColor.getTextPrimary(context),
+                      ),
                     ),
                     const SizedBox(height: 16),
                     SizedBox(
@@ -77,7 +85,7 @@ class ReportScreen extends StatelessWidget {
                       child: CustomButton(
                         text: "Report Another Incident",
                         textColor: Colors.white,
-                        buttonColor: AppColor.appSecondary,
+                        buttonColor: AppColor.getInteractivePrimary(context),
                         fontSize: 16,
                         onPressed: controller.resetSubmission,
                       ),
@@ -91,7 +99,7 @@ class ReportScreen extends StatelessWidget {
         // Main Form Screen
         return Scaffold(
           appBar: AppMainBar(showBack: true),
-          backgroundColor: AppColor.appBackground,
+          backgroundColor: colorScheme.surface,
           body: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             child: Column(
@@ -106,7 +114,7 @@ class ReportScreen extends StatelessWidget {
                       height: 45,
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
-                          colors: [AppColor.appSecondary, AppColor.appPrimary],
+                          colors: AppColor.getPrimaryGradient(context),
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                         ),
@@ -121,21 +129,22 @@ class ReportScreen extends StatelessWidget {
                     const SizedBox(width: 12),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: const [
+                      children: [
                         Text(
                           "Report an Incident",
                           style: TextStyle(
                             fontSize: 22,
                             fontWeight: FontWeight.bold,
+                            color: AppColor.getTextPrimary(context),
                           ),
                         ),
-                        SizedBox(height: 2),
+                        const SizedBox(height: 2),
                         Text(
                           "Help keep our community safe",
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
-                            color: Colors.black54,
+                            color: AppColor.getTextSecondary(context),
                           ),
                         ),
                       ],
@@ -147,13 +156,20 @@ class ReportScreen extends StatelessWidget {
                   width: double.infinity,
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: AppColor.appPrimary,
+                    color: isDark
+                        ? AppColor.teal900.withValues(alpha: 0.3)
+                        : AppColor.teal50,
                     borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: isDark
+                          ? AppColor.teal700.withValues(alpha: 0.3)
+                          : AppColor.teal100,
+                    ),
                   ),
-                  child: const Text(
+                  child: Text(
                     "🔒 Your report is completely anonymous. We don't collect personal information.",
                     style: TextStyle(
-                      color: Colors.teal,
+                      color: isDark ? AppColor.teal300 : AppColor.teal700,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -161,9 +177,13 @@ class ReportScreen extends StatelessWidget {
                 const SizedBox(height: 24),
 
                 // Incident Type
-                const Text(
+                Text(
                   "What happened?",
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: AppColor.getTextPrimary(context),
+                  ),
                 ),
                 const SizedBox(height: 8),
                 Column(
@@ -208,9 +228,13 @@ class ReportScreen extends StatelessWidget {
                 const SizedBox(height: 16),
 
                 // Severity Level
-                const Text(
+                Text(
                   "How serious was it?",
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: AppColor.getTextPrimary(context),
+                  ),
                 ),
                 const SizedBox(height: 8),
                 Column(
@@ -219,7 +243,7 @@ class ReportScreen extends StatelessWidget {
                       context,
                       title: "HIGH RISK",
                       subtitle: "Immediate danger",
-                      badgeColor: Colors.red,
+                      badgeColor: AppColor.dangerRed,
                       value: "high",
                       groupValue: controller.severity,
                       onChanged: controller.setSeverity,
@@ -228,7 +252,7 @@ class ReportScreen extends StatelessWidget {
                       context,
                       title: "MEDIUM RISK",
                       subtitle: "Concerning situation",
-                      badgeColor: Colors.orange,
+                      badgeColor: AppColor.alertOrange,
                       value: "medium",
                       groupValue: controller.severity,
                       onChanged: controller.setSeverity,
@@ -237,7 +261,7 @@ class ReportScreen extends StatelessWidget {
                       context,
                       title: "LOW RISK",
                       subtitle: "Minor incident",
-                      badgeColor: Colors.yellow[700]!,
+                      badgeColor: AppColor.warningAmber,
                       value: "low",
                       groupValue: controller.severity,
                       onChanged: controller.setSeverity,
@@ -247,9 +271,13 @@ class ReportScreen extends StatelessWidget {
                 const SizedBox(height: 16),
 
                 // Location Input
-                const Text(
+                Text(
                   "Where did this happen?",
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: AppColor.getTextPrimary(context),
+                  ),
                 ),
                 const SizedBox(height: 8),
                 Row(
@@ -257,10 +285,23 @@ class ReportScreen extends StatelessWidget {
                     Expanded(
                       child: TextField(
                         controller: controller.locationController,
+                        style: TextStyle(color: AppColor.getTextPrimary(context)),
                         decoration: InputDecoration(
                           hintText: "Enter location manually",
+                          hintStyle: TextStyle(color: AppColor.getTextTertiary(context)),
+                          filled: true,
+                          fillColor: AppColor.getContainerBackground(context),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
+                            borderSide: BorderSide(color: AppColor.getContainerBorder(context)),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: BorderSide(color: AppColor.getContainerBorder(context)),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: BorderSide(color: AppColor.getInteractivePrimary(context)),
                           ),
                           contentPadding: const EdgeInsets.symmetric(
                             horizontal: 12,
@@ -270,10 +311,6 @@ class ReportScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    //ElevatedButton(
-                    // onPressed: () {
-                    //add automatically select the location functionality
-                    //},
                     ElevatedButton(
                       onPressed: () async {
                         final result = await showDialog<Map<String, dynamic>>(
@@ -288,9 +325,9 @@ class ReportScreen extends StatelessWidget {
                         }
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        foregroundColor: AppColor.appSecondary,
-                        side: BorderSide(color: AppColor.appSecondary),
+                        backgroundColor: AppColor.getContainerBackground(context),
+                        foregroundColor: AppColor.getInteractivePrimary(context),
+                        side: BorderSide(color: AppColor.getInteractivePrimary(context)),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
                         ),
@@ -301,36 +338,53 @@ class ReportScreen extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 4),
-                const Text(
+                Text(
                   "💡 Or use current location (automatically detected)",
-                  style: TextStyle(fontSize: 12, color: Colors.black54),
+                  style: TextStyle(fontSize: 12, color: AppColor.getTextSecondary(context)),
                 ),
                 const SizedBox(height: 16),
 
                 // Time
-                const Text(
+                Text(
                   "When did this happen?",
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: AppColor.getTextPrimary(context),
+                  ),
                 ),
                 const SizedBox(height: 8),
-                const Text(
+                Text(
                   "Date",
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontSize: 14, 
+                    fontWeight: FontWeight.bold,
+                    color: AppColor.getTextPrimary(context),
+                  ),
                 ),
                 const SizedBox(height: 8),
                 TextField(
                   controller: controller.dateController,
                   readOnly: true,
+                  style: TextStyle(color: AppColor.getTextPrimary(context)),
                   decoration: InputDecoration(
                     hintText: "Select Date",
+                    hintStyle: TextStyle(color: AppColor.getTextTertiary(context)),
+                    filled: true,
+                    fillColor: AppColor.getContainerBackground(context),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide(color: AppColor.getContainerBorder(context)),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide(color: AppColor.getContainerBorder(context)),
                     ),
                     contentPadding: const EdgeInsets.symmetric(
                       horizontal: 12,
                       vertical: 12,
                     ),
-                    suffixIcon: Icon(Icons.calendar_today),
+                    suffixIcon: Icon(Icons.calendar_today, color: AppColor.getIconPrimary(context)),
                   ),
                   onTap: () async {
                     DateTime? picked = await showDatePicker(
@@ -348,24 +402,37 @@ class ReportScreen extends StatelessWidget {
                 ),
 
                 const SizedBox(height: 16),
-                const Text(
+                Text(
                   "Time",
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontSize: 14, 
+                    fontWeight: FontWeight.bold,
+                    color: AppColor.getTextPrimary(context),
+                  ),
                 ),
                 const SizedBox(height: 8),
                 TextField(
                   controller: controller.timeController,
                   readOnly: true,
+                  style: TextStyle(color: AppColor.getTextPrimary(context)),
                   decoration: InputDecoration(
                     hintText: "Select Time",
+                    hintStyle: TextStyle(color: AppColor.getTextTertiary(context)),
+                    filled: true,
+                    fillColor: AppColor.getContainerBackground(context),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide(color: AppColor.getContainerBorder(context)),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide(color: AppColor.getContainerBorder(context)),
                     ),
                     contentPadding: const EdgeInsets.symmetric(
                       horizontal: 12,
                       vertical: 12,
                     ),
-                    suffixIcon: Icon(Icons.access_time),
+                    suffixIcon: Icon(Icons.access_time, color: AppColor.getIconPrimary(context)),
                   ),
                   onTap: () async {
                     TimeOfDay? pickedTime = await showTimePicker(
@@ -381,35 +448,57 @@ class ReportScreen extends StatelessWidget {
                   },
                 ),
 
+                const SizedBox(height: 16),
                 // Description
-                const Text(
+                Text(
                   "Additional Details (Optional)",
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontSize: 16, 
+                    fontWeight: FontWeight.bold,
+                    color: AppColor.getTextPrimary(context),
+                  ),
                 ),
                 const SizedBox(height: 8),
                 TextField(
                   controller: controller.descriptionController,
                   maxLines: 5,
+                  style: TextStyle(color: AppColor.getTextPrimary(context)),
                   decoration: InputDecoration(
                     hintText:
                         "Provide any additional details that might help others stay safe...",
+                    hintStyle: TextStyle(color: AppColor.getTextTertiary(context)),
+                    filled: true,
+                    fillColor: AppColor.getContainerBackground(context),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide(color: AppColor.getContainerBorder(context)),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide(color: AppColor.getContainerBorder(context)),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide(color: AppColor.getInteractivePrimary(context)),
                     ),
                     contentPadding: const EdgeInsets.all(12),
                   ),
                 ),
                 const SizedBox(height: 4),
-                const Text(
+                Text(
                   "🔒 No personal information will be shared",
-                  style: TextStyle(fontSize: 12, color: Colors.black54),
+                  style: TextStyle(fontSize: 12, color: AppColor.getTextSecondary(context)),
                 ),
                 const SizedBox(height: 16),
 
                 // Photo Upload
-                const Text(
+                Text(
                   "Add Photo (Optional)",
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontSize: 16, 
+                    fontWeight: FontWeight.bold,
+                    color: AppColor.getTextPrimary(context),
+                  ),
                 ),
                 const SizedBox(height: 8),
 
@@ -458,26 +547,26 @@ class ReportScreen extends StatelessWidget {
                   },
                   child: Container(
                     width: double.infinity,
-                    height: 40,
+                    height: 44,
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: AppColor.getContainerBackground(context),
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
-                        color: AppColor.appSecondary,
+                        color: AppColor.getInteractivePrimary(context),
                         width: 1.5,
                       ),
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.camera_alt, color: AppColor.appSecondary),
+                        Icon(Icons.camera_alt, color: AppColor.getInteractivePrimary(context)),
                         const SizedBox(width: 8),
                         Text(
                           controller.selectedImage == null
                               ? "Upload Photo"
                               : "Change Photo",
                           style: TextStyle(
-                            color: AppColor.appSecondary,
+                            color: AppColor.getInteractivePrimary(context),
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -487,9 +576,9 @@ class ReportScreen extends StatelessWidget {
                 ),
 
                 const SizedBox(height: 4),
-                const Text(
+                Text(
                   "📸 Images are reviewed before being shared",
-                  style: TextStyle(fontSize: 12, color: Colors.black54),
+                  style: TextStyle(fontSize: 12, color: AppColor.getTextSecondary(context)),
                 ),
                 const SizedBox(height: 24),
 
@@ -497,33 +586,10 @@ class ReportScreen extends StatelessWidget {
                 SizedBox(
                   width: double.infinity,
                   height: 52,
-                  // child: ElevatedButton(
-                  //   onPressed: controller.handleSubmit,
-                  //   style: ElevatedButton.styleFrom(
-                  //     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                  //     padding: const EdgeInsets.all(0),
-                  //     elevation: 4,
-                  //   ),
-                  //   child: Ink(
-                  //     decoration: BoxDecoration(
-                  //       color: AppColor.appSecondary,
-                  //       // gradient: LinearGradient(
-                  //       //   colors: [AppColor.appSecondary, AppColor.appPrimary],
-                  //       // ),
-                  //       borderRadius: BorderRadius.circular(16),
-                  //     ),
-                  //     child: const Center(
-                  //       child: Text(
-                  //         "Submit Anonymous Report",
-                  //         style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
-                  //       ),
-                  //     ),
-                  //   ),
-                  // ),
                   child: CustomButton(
                     text: "Submit Anonymous Report",
                     textColor: Colors.white,
-                    buttonColor: AppColor.appSecondary,
+                    buttonColor: AppColor.getInteractivePrimary(context),
                     fontSize: 16,
                     onPressed: controller.handleSubmit,
                   ),
@@ -547,22 +613,23 @@ class ReportScreen extends StatelessWidget {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
+      backgroundColor: AppColor.getContainerBackground(context),
       builder: (_) {
         return SafeArea(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
-                leading: const Icon(Icons.camera_alt),
-                title: const Text("Take photo"),
+                leading: Icon(Icons.camera_alt, color: AppColor.getIconPrimary(context)),
+                title: Text("Take photo", style: TextStyle(color: AppColor.getTextPrimary(context))),
                 onTap: () {
                   Navigator.pop(context);
                   controller.pickImage(ImageSource.camera);
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.photo_library),
-                title: const Text("Choose from gallery"),
+                leading: Icon(Icons.photo_library, color: AppColor.getIconPrimary(context)),
+                title: Text("Choose from gallery", style: TextStyle(color: AppColor.getTextPrimary(context))),
                 onTap: () {
                   Navigator.pop(context);
                   controller.pickImage(ImageSource.gallery);
@@ -583,18 +650,19 @@ class ReportScreen extends StatelessWidget {
     required Function(String) onChanged,
   }) {
     final isSelected = value == groupValue;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return GestureDetector(
       onTap: () => onChanged(value),
       child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 1),
-        // padding: const EdgeInsets.all(0),
+        margin: const EdgeInsets.symmetric(vertical: 4),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppColor.appPrimary.withOpacity(0.3)
-              : Colors.white,
+              ? AppColor.getInteractivePrimary(context).withValues(alpha: isDark ? 0.2 : 0.1)
+              : AppColor.getContainerBackground(context),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isSelected ? AppColor.appSecondary : Colors.grey[300]!,
+            color: isSelected ? AppColor.getInteractivePrimary(context) : AppColor.getContainerBorder(context),
             width: 2,
           ),
         ),
@@ -604,12 +672,16 @@ class ReportScreen extends StatelessWidget {
               value: value,
               groupValue: groupValue,
               onChanged: (val) => onChanged(val!),
-              activeColor: AppColor.appSecondary,
+              activeColor: AppColor.getInteractivePrimary(context),
             ),
             const SizedBox(width: 8),
             Text(
               label,
-              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+              style: TextStyle(
+                fontSize: 14, 
+                fontWeight: FontWeight.w600,
+                color: AppColor.getTextPrimary(context),
+              ),
             ),
           ],
         ),
@@ -627,17 +699,21 @@ class ReportScreen extends StatelessWidget {
     required Function(String) onChanged,
   }) {
     final isSelected = value == groupValue;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return GestureDetector(
       onTap: () => onChanged(value),
       child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 1),
-        // padding: const EdgeInsets.all(2),
+        margin: const EdgeInsets.symmetric(vertical: 4),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppColor.appPrimary.withOpacity(0.2)
-              : Colors.white,
+              ? AppColor.getInteractivePrimary(context).withValues(alpha: isDark ? 0.2 : 0.1)
+              : AppColor.getContainerBackground(context),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.grey[300]!, width: 2),
+          border: Border.all(
+            color: isSelected ? AppColor.getInteractivePrimary(context) : AppColor.getContainerBorder(context),
+            width: 2,
+          ),
         ),
         child: Row(
           children: [
@@ -645,7 +721,7 @@ class ReportScreen extends StatelessWidget {
               value: value,
               groupValue: groupValue,
               onChanged: (val) => onChanged(val!),
-              activeColor: AppColor.appSecondary,
+              activeColor: AppColor.getInteractivePrimary(context),
             ),
             const SizedBox(width: 8),
             Container(
@@ -664,9 +740,14 @@ class ReportScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 8),
-            Text(
-              subtitle,
-              style: const TextStyle(fontSize: 14, color: Colors.black54),
+            Expanded(
+              child: Text(
+                subtitle,
+                style: TextStyle(
+                  fontSize: 14, 
+                  color: AppColor.getTextSecondary(context),
+                ),
+              ),
             ),
           ],
         ),

@@ -1,6 +1,8 @@
 // settings_screen.dart
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:provider/provider.dart';
+import 'package:staysafe/Controller/theme_controller.dart';
 import 'package:staysafe/view/widgets/app_bar.dart';
 import '../../utils/app_colors.dart';
 
@@ -12,32 +14,37 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  // Appearance settings
-  bool isDarkMode = false;
-
   // Privacy & Security settings
   bool profileVisibility = true;
 
   // App Behavior settings
   bool autoStartOnBoot = true;
 
+  // Get theme controller
+  bool get isDarkMode => context.watch<ThemeController>().isDarkMode;
+
   Widget _buildSettingsHeader() {
+    final theme = Theme.of(context);
+    final textTheme = theme.textTheme;
+    final isDark = theme.brightness == Brightness.dark;
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            AppColor.appSecondary.withValues(alpha: 0.1),
-            AppColor.appPrimary.withValues(alpha: 0.1),
-          ],
+          colors: AppColor.getPrimaryGradient(context),
         ),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColor.appSecondary.withValues(alpha: 0.2)),
+        border: Border.all(
+          color: AppColor.getInteractivePrimary(context).withValues(alpha: 0.3),
+        ),
         boxShadow: [
           BoxShadow(
-            color: AppColor.appSecondary.withValues(alpha: 0.1),
+            color: AppColor.getInteractivePrimary(
+              context,
+            ).withValues(alpha: isDark ? 0.2 : 0.1),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -48,11 +55,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: AppColor.appSecondary,
+              color: AppColor.getInteractivePrimary(context),
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
-                  color: AppColor.appSecondary.withValues(alpha: 0.3),
+                  color: AppColor.getInteractivePrimary(
+                    context,
+                  ).withValues(alpha: 0.3),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
@@ -65,25 +74,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           ),
           const SizedBox(width: 16),
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   'Settings',
-                  style: TextStyle(
+                  style: textTheme.headlineSmall?.copyWith(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF111827),
+                    color: Colors.white,
                   ),
                 ),
-                SizedBox(height: 4),
+                const SizedBox(height: 4),
                 Text(
-                  'Customize your SafeMap experience',
-                  style: TextStyle(
+                  'Customize your app experience',
+                  style: textTheme.bodyMedium?.copyWith(
                     fontSize: 14,
-                    color: Color(0xFF6B7280),
                     fontWeight: FontWeight.w500,
+                    color: Colors.white.withValues(alpha: 0.9),
                   ),
                 ),
               ],
@@ -96,6 +105,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final themeController = context.watch<ThemeController>();
+
     return Scaffold(
       appBar: AppMainBar(showBack: true),
       backgroundColor: Theme.of(context).colorScheme.surface,
@@ -115,9 +126,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   subtitle: 'Switch between light and dark theme',
                   value: isDarkMode,
                   onChanged: (value) {
-                    setState(() {
-                      isDarkMode = value;
-                    });
+                    context.read<ThemeController>().toggleTheme();
                     _showSnackBar(
                       'Dark mode ${value ? 'enabled' : 'disabled'}',
                     );
@@ -175,22 +184,34 @@ class _SettingsScreenState extends State<SettingsScreen> {
     required ValueChanged<bool> onChanged,
     required IconData icon,
   }) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFF9FAFB),
+        color: AppColor.getContainerBackground(context),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
+        border: Border.all(
+          color: AppColor.getContainerBorder(context),
+          width: 1,
+        ),
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: AppColor.appSecondary.withValues(alpha: 0.1),
+              color: AppColor.getInteractivePrimary(
+                context,
+              ).withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Icon(icon, color: AppColor.appSecondary, size: 16),
+            child: Icon(
+              icon,
+              color: AppColor.getIconPrimary(context),
+              size: 16,
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -199,18 +220,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
-                    color: Color(0xFF111827),
+                    color: AppColor.getTextPrimary(context),
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   subtitle,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
-                    color: Color(0xFF6B7280),
+                    color: AppColor.getTextSecondary(context),
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -222,10 +243,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
             child: Switch(
               value: value,
               onChanged: onChanged,
-              activeColor: AppColor.appSecondary,
-              activeTrackColor: AppColor.appSecondary.withValues(alpha: 0.3),
-              inactiveThumbColor: const Color(0xFF9CA3AF),
-              inactiveTrackColor: const Color(0xFFE5E7EB),
+              activeColor: AppColor.getInteractivePrimary(context),
+              activeTrackColor: AppColor.getInteractivePrimary(
+                context,
+              ).withValues(alpha: 0.3),
+              inactiveThumbColor: AppColor.getIconSecondary(context),
+              inactiveTrackColor: AppColor.getContainerBorder(context),
             ),
           ),
         ],

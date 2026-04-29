@@ -17,8 +17,11 @@ class _AIRecommendationScreenState extends State<AIRecommendationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
       appBar: AppMainBar(showBack: true),
+      backgroundColor: colorScheme.surface,
       body: SafeArea(
         child: Column(
           children: [
@@ -40,7 +43,7 @@ class _AIRecommendationScreenState extends State<AIRecommendationScreen> {
                         decoration: BoxDecoration(
                           color: selectedIndex == 0
                               ? null
-                              : Colors.grey.shade200,
+                              : colorScheme.surfaceContainerHighest,
                           gradient: selectedIndex == 0
                               ? LinearGradient(
                             colors: [AppColor.appPrimary, AppColor.appSecondary],
@@ -49,7 +52,12 @@ class _AIRecommendationScreenState extends State<AIRecommendationScreen> {
                           )
                               : null,
                           borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: Colors.grey.shade300, width: 1),
+                          border: Border.all(
+                            color: isDark
+                                ? const Color(0xFF334155)
+                                : Colors.grey.shade300,
+                            width: 1,
+                          ),
                           boxShadow: [
                             BoxShadow(
                               color: Colors.black.withOpacity(0.05),
@@ -63,7 +71,9 @@ class _AIRecommendationScreenState extends State<AIRecommendationScreen> {
                           children: [
                             Icon(
                               LucideIcons.botMessageSquare,
-                              color: selectedIndex == 0 ? Colors.white : Colors.black87,
+                              color: selectedIndex == 0
+                                  ? Colors.white
+                                  : colorScheme.onSurface,
                               size: 20,
                             ),
                             const SizedBox(width: 8),
@@ -71,7 +81,9 @@ class _AIRecommendationScreenState extends State<AIRecommendationScreen> {
                               'AI Chat Boot',
                               style: TextStyle(
                                 fontWeight: FontWeight.w600,
-                                color: selectedIndex == 0 ? Colors.white : Colors.black87,
+                                color: selectedIndex == 0
+                                    ? Colors.white
+                                    : colorScheme.onSurface,
                               ),
                             ),
                           ],
@@ -90,7 +102,7 @@ class _AIRecommendationScreenState extends State<AIRecommendationScreen> {
                         decoration: BoxDecoration(
                           color: selectedIndex == 1
                               ? null
-                              : Colors.grey.shade200,
+                              : colorScheme.surfaceContainerHighest,
                           gradient: selectedIndex == 1
                               ? LinearGradient(
                             colors: [AppColor.appPrimary, AppColor.appSecondary],
@@ -99,7 +111,12 @@ class _AIRecommendationScreenState extends State<AIRecommendationScreen> {
                           )
                               : null,
                           borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: Colors.grey.shade300, width: 1),
+                          border: Border.all(
+                            color: isDark
+                                ? const Color(0xFF334155)
+                                : Colors.grey.shade300,
+                            width: 1,
+                          ),
                           boxShadow: [
                             BoxShadow(
                               color: Colors.black.withOpacity(0.05),
@@ -113,7 +130,9 @@ class _AIRecommendationScreenState extends State<AIRecommendationScreen> {
                           children: [
                             Icon(
                               Icons.route_outlined,
-                              color: selectedIndex == 1 ? Colors.white : Colors.black87,
+                              color: selectedIndex == 1
+                                  ? Colors.white
+                                  : colorScheme.onSurface,
                               size: 20,
                             ),
                             const SizedBox(width: 8),
@@ -121,7 +140,9 @@ class _AIRecommendationScreenState extends State<AIRecommendationScreen> {
                               'Routes',
                               style: TextStyle(
                                 fontWeight: FontWeight.w600,
-                                color: selectedIndex == 1 ? Colors.white : Colors.black87,
+                                color: selectedIndex == 1
+                                    ? Colors.white
+                                    : colorScheme.onSurface,
                               ),
                             ),
                           ],
@@ -157,8 +178,10 @@ class AiAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return AppBar(
-      backgroundColor: Colors.white,
+      backgroundColor: colorScheme.surfaceContainerLowest,
       elevation: 1,
       automaticallyImplyLeading: false, // remove default back icon
 
@@ -189,14 +212,14 @@ class AiAppBar extends StatelessWidget implements PreferredSizeWidget {
           const SizedBox(width: 10),
 
           // 🧠 Title + Subtitle
-          const Column(
+          Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
                 "AI Assistant",
                 style: TextStyle(
-                  color: Colors.black,
+                  color: colorScheme.onSurface,
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
                 ),
@@ -205,7 +228,7 @@ class AiAppBar extends StatelessWidget implements PreferredSizeWidget {
               Text(
                 "Your intelligent safety companion",
                 style: TextStyle(
-                  color: Colors.black,
+                  color: isDark ? colorScheme.onSurfaceVariant : Colors.black,
                   fontSize: 13,
                 ),
               ),

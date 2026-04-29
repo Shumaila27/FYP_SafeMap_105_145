@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:url_launcher/url_launcher_string.dart';
 import '../../utils/app_colors.dart';
 
 class HelpSupportScreen extends StatefulWidget {
@@ -11,8 +10,26 @@ class HelpSupportScreen extends StatefulWidget {
 }
 
 class _HelpSupportScreenState extends State<HelpSupportScreen> {
+  BoxDecoration _sectionDecoration(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return BoxDecoration(
+      color: AppColor.getContainerBackground(context),
+      borderRadius: BorderRadius.circular(14),
+      border: Border.all(color: AppColor.getContainerBorder(context), width: 1),
+    );
+  }
+
+  TextStyle _sectionTitleStyle(BuildContext context) {
+    return TextStyle(
+      fontSize: 16,
+      fontWeight: FontWeight.bold,
+      color: AppColor.getTextPrimary(context),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -25,7 +42,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [AppColor.appSecondary, AppColor.appPrimary],
+              colors: AppColor.getPrimaryGradient(context),
             ),
           ),
         ),
@@ -34,7 +51,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
         shadowColor: AppColor.appSecondary.withValues(alpha: 0.3),
         iconTheme: const IconThemeData(color: Colors.white, size: 24),
       ),
-      backgroundColor: Colors.grey.shade50,
+      backgroundColor: colorScheme.surface,
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -73,33 +90,23 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
   }
 
   Widget _buildEmergencySection() {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE6E6F0), width: 1.4),
-      ),
+      decoration: _sectionDecoration(context),
       child: Column(
         children: [
           // Main heading with icon
           Row(
-            children: const [
-              Icon(Icons.emergency, color: Colors.red),
-              SizedBox(width: 8),
-              Text(
-                'Emergency Help',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF111827),
-                ),
-              ),
+            children: [
+              const Icon(Icons.emergency, color: Colors.red),
+              const SizedBox(width: 8),
+              Text('Emergency Help', style: _sectionTitleStyle(context)),
             ],
           ),
           const SizedBox(height: 12),
           // Minimal line divider
-          Container(height: 1, color: Colors.grey.shade300),
+          Container(height: 1, color: colorScheme.outlineVariant),
           const SizedBox(height: 12),
           // Emergency content
           Container(
@@ -158,33 +165,23 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
   }
 
   Widget _buildQuickHelpSection() {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE6E6F0), width: 1.4),
-      ),
+      decoration: _sectionDecoration(context),
       child: Column(
         children: [
           // Main heading with icon
           Row(
-            children: const [
-              Icon(Icons.help_outline, color: Colors.blue),
-              SizedBox(width: 8),
-              Text(
-                'Quick Help',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF111827),
-                ),
-              ),
+            children: [
+              const Icon(Icons.help_outline, color: Colors.blue),
+              const SizedBox(width: 8),
+              Text('Quick Help', style: _sectionTitleStyle(context)),
             ],
           ),
           const SizedBox(height: 12),
           // Minimal line divider
-          Container(height: 1, color: Colors.grey.shade300),
+          Container(height: 1, color: colorScheme.outlineVariant),
           const SizedBox(height: 12),
           // Quick Help content
           GridView.count(
@@ -258,33 +255,26 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
   }
 
   Widget _buildFAQSection() {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE6E6F0), width: 1.4),
-      ),
+      decoration: _sectionDecoration(context),
       child: Column(
         children: [
           // Main heading with icon
           Row(
-            children: const [
-              Icon(Icons.quiz, color: Colors.purple),
-              SizedBox(width: 8),
+            children: [
+              const Icon(Icons.quiz, color: Colors.purple),
+              const SizedBox(width: 8),
               Text(
                 'Frequently Asked Questions',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF111827),
-                ),
+                style: _sectionTitleStyle(context),
               ),
             ],
           ),
           const SizedBox(height: 12),
           // Minimal line divider
-          Container(height: 1, color: Colors.grey.shade300),
+          Container(height: 1, color: colorScheme.outlineVariant),
           const SizedBox(height: 12),
           // FAQ content
           _buildFAQItem(
@@ -313,13 +303,14 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
   }
 
   Widget _buildFAQItem(String question, String answer) {
+    final colorScheme = Theme.of(context).colorScheme;
     return ExpansionTile(
       title: Text(
         question,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 14,
           fontWeight: FontWeight.w600,
-          color: Colors.black87,
+          color: colorScheme.onSurface,
         ),
       ),
       children: [
@@ -327,9 +318,9 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
           padding: const EdgeInsets.all(16),
           child: Text(
             answer,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 13,
-              color: Colors.black54,
+              color: colorScheme.onSurfaceVariant,
               height: 1.4,
             ),
           ),
@@ -339,13 +330,10 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
   }
 
   Widget _buildContactSection() {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE6E6F0), width: 1.4),
-      ),
+      decoration: _sectionDecoration(context),
       child: Column(
         children: [
           // Main heading with icon
@@ -353,19 +341,12 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
             children: [
               Icon(Icons.support_agent, color: AppColor.appSecondary),
               const SizedBox(width: 8),
-              const Text(
-                'Contact Support',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF111827),
-                ),
-              ),
+              Text('Contact Support', style: _sectionTitleStyle(context)),
             ],
           ),
           const SizedBox(height: 12),
           // Minimal line divider
-          Container(height: 1, color: Colors.grey.shade300),
+          Container(height: 1, color: colorScheme.outlineVariant),
           const SizedBox(height: 12),
           // Contact content
           _buildContactInfo(
@@ -374,6 +355,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
             subtitle: 'support@safemap.com',
             color: Colors.blue,
             iconColor: Colors.white,
+            onTap: _sendEmail,
           ),
           _buildContactInfo(
             icon: Icons.phone_in_talk,
@@ -381,6 +363,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
             subtitle: '+92 312 4195181',
             color: Colors.purple,
             iconColor: Colors.white,
+            onTap: _makePhoneCall,
           ),
           _buildContactInfo(
             icon: Icons.message,
@@ -388,6 +371,13 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
             subtitle: '+92 312 4195181',
             color: Colors.green.shade600,
             iconColor: Colors.white,
+            onTap: _openWhatsApp,
+          ),
+          const SizedBox(height: 8),
+          OutlinedButton.icon(
+            onPressed: _openLiveChat,
+            icon: const Icon(Icons.chat_bubble_outline),
+            label: const Text("Open Live Chat Demo"),
           ),
         ],
       ),
@@ -400,94 +390,93 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
     required String subtitle,
     Color color = Colors.blue,
     Color iconColor = Colors.white,
+    VoidCallback? onTap,
   }) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.3)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: color,
-              borderRadius: BorderRadius.circular(10),
-              boxShadow: [
-                BoxShadow(
-                  color: color.withOpacity(0.3),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Icon(icon, color: iconColor, size: 20),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black87,
+    final colorScheme = Theme.of(context).colorScheme;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: color.withValues(alpha: 0.3)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: color,
+                borderRadius: BorderRadius.circular(10),
+                boxShadow: [
+                  BoxShadow(
+                    color: color.withValues(alpha: 0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
                   ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  subtitle,
-                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
-                ),
-              ],
+                ],
+              ),
+              child: Icon(icon, color: iconColor, size: 20),
             ),
-          ),
-          Container(
-            padding: const EdgeInsets.all(6),
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(6),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: colorScheme.onSurface,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
             ),
-            child: Icon(Icons.info_outline, size: 14, color: color),
-          ),
-        ],
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Icon(Icons.open_in_new, size: 14, color: color),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildSafetyTipsSection() {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE6E6F0), width: 1.4),
-      ),
+      decoration: _sectionDecoration(context),
       child: Column(
         children: [
           // Main heading with icon
           Row(
-            children: const [
-              Icon(Icons.security, color: Colors.green),
-              SizedBox(width: 8),
-              Text(
-                'Safety Tips',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF111827),
-                ),
-              ),
+            children: [
+              const Icon(Icons.security, color: Colors.green),
+              const SizedBox(width: 8),
+              Text('Safety Tips', style: _sectionTitleStyle(context)),
             ],
           ),
           const SizedBox(height: 12),
           // Minimal line divider
-          Container(height: 1, color: Colors.grey.shade300),
+          Container(height: 1, color: colorScheme.outlineVariant),
           const SizedBox(height: 12),
           // Safety Tips content
           _buildSafetyTip(
@@ -512,6 +501,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
   }
 
   Widget _buildSafetyTip(String tip, IconData icon) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
@@ -523,9 +513,8 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
               tip,
               style: const TextStyle(
                 fontSize: 13,
-                color: Colors.black87,
                 height: 1.3,
-              ),
+              ).copyWith(color: colorScheme.onSurface),
             ),
           ),
         ],
@@ -534,38 +523,28 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
   }
 
   Widget _buildReportIssueSection() {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE6E6F0), width: 1.4),
-      ),
+      decoration: _sectionDecoration(context),
       child: Column(
         children: [
           // Main heading with icon
           Row(
-            children: const [
-              Icon(Icons.bug_report, color: Colors.orange),
-              SizedBox(width: 8),
-              Text(
-                'Report an Issue',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF111827),
-                ),
-              ),
+            children: [
+              const Icon(Icons.bug_report, color: Colors.orange),
+              const SizedBox(width: 8),
+              Text('Report an Issue', style: _sectionTitleStyle(context)),
             ],
           ),
           const SizedBox(height: 12),
           // Minimal line divider
-          Container(height: 1, color: Colors.grey.shade300),
+          Container(height: 1, color: colorScheme.outlineVariant),
           const SizedBox(height: 12),
           // Report Issue content
-          const Text(
+          Text(
             'Found a bug or have a suggestion? Let us know!',
-            style: TextStyle(fontSize: 14, color: Colors.grey),
+            style: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant),
           ),
           const SizedBox(height: 16),
           ElevatedButton.icon(
@@ -584,38 +563,28 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
   }
 
   Widget _buildCommunitySection() {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE6E6F0), width: 1.4),
-      ),
+      decoration: _sectionDecoration(context),
       child: Column(
         children: [
           // Main heading with icon
           Row(
-            children: const [
-              Icon(Icons.gavel, color: Colors.indigo),
-              SizedBox(width: 8),
-              Text(
-                'Community Guidelines',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF111827),
-                ),
-              ),
+            children: [
+              const Icon(Icons.gavel, color: Colors.indigo),
+              const SizedBox(width: 8),
+              Text('Community Guidelines', style: _sectionTitleStyle(context)),
             ],
           ),
           const SizedBox(height: 12),
           // Minimal line divider
-          Container(height: 1, color: Colors.grey.shade300),
+          Container(height: 1, color: colorScheme.outlineVariant),
           const SizedBox(height: 12),
           // Community Guidelines content
-          const Text(
+          Text(
             'Help us keep SafeMap safe for everyone by following our community guidelines.',
-            style: TextStyle(fontSize: 14, color: Colors.grey),
+            style: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant),
           ),
           const SizedBox(height: 16),
           OutlinedButton.icon(

@@ -3,8 +3,11 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:staysafe/view/widgets/app_bar.dart';
+import '../../Models/guardian_model.dart';
+import '../../services/guardian_service.dart';
 import '../../utils/app_colors.dart';
+import '../widgets/badge.dart';
+import '../widgets/app_bar.dart';
 import 'help_support_new.dart';
 import 'settings_screen.dart';
 import 'about_screen.dart';
@@ -26,15 +29,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
   late TextEditingController _nameController;
   late TextEditingController _emailController;
 
-  // Emergency contacts state
-  final List<Map<String, String>> _emergencyContacts = [
-    {'name': 'Ayesha Khan', 'phone': '+92 300 1234567', 'initials': 'AK'},
-    {'name': 'Fatima Ali', 'phone': '+92 333 9876543', 'initials': 'FA'},
-  ];
+  // Emergency contacts state - using shared GuardianService
+  final GuardianService _guardianService = GuardianService();
 
   // Controllers for emergency contact editing
   final TextEditingController _contactNameController = TextEditingController();
   final TextEditingController _contactPhoneController = TextEditingController();
+  final TextEditingController _contactRelationController =
+      TextEditingController();
 
   // switches (defaultChecked in React)
   bool anonymousReporting = true;
@@ -50,6 +52,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     super.initState();
     _nameController = TextEditingController(text: _userName);
     _emailController = TextEditingController(text: _userEmail);
+    _guardianService.initializeGuardians();
   }
 
   @override
@@ -58,6 +61,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _emailController.dispose();
     _contactNameController.dispose();
     _contactPhoneController.dispose();
+    _contactRelationController.dispose();
     super.dispose();
   }
 
@@ -153,17 +157,91 @@ class _ProfileScreenState extends State<ProfileScreen> {
           children: [
             TextField(
               controller: _nameController,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Name',
-                border: OutlineInputBorder(),
+                labelStyle: TextStyle(
+                  color: AppColor.getTextPrimary(context),
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+                hintText: 'Enter your name',
+                hintStyle: TextStyle(color: AppColor.getTextTertiary(context)),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(
+                    color: AppColor.getContainerBorder(context),
+                    width: 1,
+                  ),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(
+                    color: AppColor.getContainerBorder(context),
+                    width: 1,
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(
+                    color: AppColor.getInteractivePrimary(context),
+                    width: 2,
+                  ),
+                ),
+                filled: true,
+                fillColor: AppColor.getContainerBackground(context),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+              ),
+              style: TextStyle(
+                color: AppColor.getTextPrimary(context),
+                fontSize: 14,
               ),
             ),
             const SizedBox(height: 16),
             TextField(
               controller: _emailController,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Email',
-                border: OutlineInputBorder(),
+                labelStyle: TextStyle(
+                  color: AppColor.getTextPrimary(context),
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+                hintText: 'Enter your email',
+                hintStyle: TextStyle(color: AppColor.getTextTertiary(context)),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(
+                    color: AppColor.getContainerBorder(context),
+                    width: 1,
+                  ),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(
+                    color: AppColor.getContainerBorder(context),
+                    width: 1,
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(
+                    color: AppColor.getInteractivePrimary(context),
+                    width: 2,
+                  ),
+                ),
+                filled: true,
+                fillColor: AppColor.getContainerBackground(context),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+              ),
+              style: TextStyle(
+                color: AppColor.getTextPrimary(context),
+                fontSize: 14,
               ),
             ),
           ],
@@ -177,17 +255,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
           ElevatedButton(
             onPressed: () {
-              setState(() {
-                _userName = _nameController.text;
-                _userEmail = _emailController.text;
-              });
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Profile updated successfully!'),
-                  backgroundColor: Colors.green,
-                ),
-              );
+              if (_nameController.text.trim().isNotEmpty) {
+                setState(() {
+                  _userName = _nameController.text.trim();
+                  _userEmail = _emailController.text.trim();
+                });
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Profile updated successfully!'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+              }
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColor.appSecondary,
@@ -216,68 +296,233 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 children: [
                   // Add new contact form
                   Container(
-                    padding: const EdgeInsets.all(12),
+                    padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: Colors.grey.shade50,
-                      borderRadius: BorderRadius.circular(8),
+                      color: AppColor.getContainerBackground(context),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: AppColor.getContainerBorder(context),
+                        width: 1,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColor.getContainerBorder(
+                            context,
+                          ).withValues(alpha: 0.1),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
                     ),
                     child: Column(
                       children: [
-                        const Text(
+                        Text(
                           'Add New Contact',
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        const SizedBox(height: 8),
-                        TextField(
-                          controller: _contactNameController,
-                          decoration: const InputDecoration(
-                            labelText: 'Name',
-                            border: OutlineInputBorder(),
-                            isDense: true,
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                            color: AppColor.getTextPrimary(context),
                           ),
                         ),
                         const SizedBox(height: 8),
                         TextField(
-                          controller: _contactPhoneController,
-                          decoration: const InputDecoration(
-                            labelText: 'Phone',
-                            border: OutlineInputBorder(),
+                          controller: _contactNameController,
+                          decoration: InputDecoration(
+                            labelText: 'Name',
+                            labelStyle: TextStyle(
+                              color: AppColor.getTextPrimary(context),
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            hintText: 'Enter contact name',
+                            hintStyle: TextStyle(
+                              color: AppColor.getTextTertiary(context),
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              borderSide: BorderSide(
+                                color: AppColor.getContainerBorder(context),
+                                width: 1,
+                              ),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              borderSide: BorderSide(
+                                color: AppColor.getContainerBorder(context),
+                                width: 1,
+                              ),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              borderSide: BorderSide(
+                                color: AppColor.getInteractivePrimary(context),
+                                width: 2,
+                              ),
+                            ),
+                            filled: true,
+                            fillColor:
+                                Theme.of(context).brightness == Brightness.dark
+                                ? const Color(0xFF1F2937)
+                                : const Color(0xFFF9FAFB),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 12,
+                            ),
                             isDense: true,
+                          ),
+                          style: TextStyle(
+                            color: AppColor.getTextPrimary(context),
+                            fontSize: 14,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        TextField(
+                          controller: _contactPhoneController,
+                          decoration: InputDecoration(
+                            labelText: 'Phone',
+                            labelStyle: TextStyle(
+                              color: AppColor.getTextPrimary(context),
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            hintText: 'Enter phone number',
+                            hintStyle: TextStyle(
+                              color: AppColor.getTextTertiary(context),
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              borderSide: BorderSide(
+                                color: AppColor.getContainerBorder(context),
+                                width: 1,
+                              ),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              borderSide: BorderSide(
+                                color: AppColor.getContainerBorder(context),
+                                width: 1,
+                              ),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              borderSide: BorderSide(
+                                color: AppColor.getInteractivePrimary(context),
+                                width: 2,
+                              ),
+                            ),
+                            filled: true,
+                            fillColor:
+                                Theme.of(context).brightness == Brightness.dark
+                                ? const Color(0xFF1F2937)
+                                : const Color(0xFFF9FAFB),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 12,
+                            ),
+                            isDense: true,
+                          ),
+                          style: TextStyle(
+                            color: AppColor.getTextPrimary(context),
+                            fontSize: 14,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        TextField(
+                          controller: _contactRelationController,
+                          decoration: InputDecoration(
+                            labelText: 'Relation',
+                            labelStyle: TextStyle(
+                              color: AppColor.getTextPrimary(context),
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            hintText:
+                                'Enter relation (e.g., Sister, Friend, Mother)',
+                            hintStyle: TextStyle(
+                              color: AppColor.getTextTertiary(context),
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              borderSide: BorderSide(
+                                color: AppColor.getContainerBorder(context),
+                                width: 1,
+                              ),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              borderSide: BorderSide(
+                                color: AppColor.getContainerBorder(context),
+                                width: 1,
+                              ),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              borderSide: BorderSide(
+                                color: AppColor.getInteractivePrimary(context),
+                                width: 2,
+                              ),
+                            ),
+                            filled: true,
+                            fillColor:
+                                Theme.of(context).brightness == Brightness.dark
+                                ? const Color(0xFF1F2937)
+                                : const Color(0xFFF9FAFB),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 12,
+                            ),
+                            isDense: true,
+                          ),
+                          style: TextStyle(
+                            color: AppColor.getTextPrimary(context),
+                            fontSize: 14,
                           ),
                         ),
                         const SizedBox(height: 8),
                         ElevatedButton(
                           onPressed: () {
-                            if (_contactNameController.text.isNotEmpty &&
-                                _contactPhoneController.text.isNotEmpty) {
+                            if (_contactNameController.text.trim().isNotEmpty &&
+                                _contactPhoneController.text.trim().isNotEmpty &&
+                                _contactRelationController.text.trim().isNotEmpty) {
+                              String newId =
+                                  (_guardianService.guardians.length + 1)
+                                      .toString();
+                              Guardian newGuardian = Guardian(
+                                id: newId,
+                                name: _contactNameController.text.trim(),
+                                phone: _contactPhoneController.text.trim(),
+                                relation: _contactRelationController.text.trim(),
+                              );
+
                               setState(() {
-                                _emergencyContacts.add({
-                                  'name': _contactNameController.text,
-                                  'phone': _contactPhoneController.text,
-                                  'initials': _contactNameController.text
-                                      .split(' ')
-                                      .map((n) => n[0])
-                                      .take(2)
-                                      .join()
-                                      .toUpperCase(),
-                                });
+                                _guardianService.addGuardian(newGuardian);
                               });
                               setDialogState(() {});
                               _contactNameController.clear();
                               _contactPhoneController.clear();
+                              _contactRelationController.clear();
                               ScaffoldMessenger.of(mainContext).showSnackBar(
                                 const SnackBar(
-                                  content: Text('Contact added successfully!'),
-                                  backgroundColor: Colors.green,
+                                  content: Text('Contact added'),
+                                  backgroundColor: Colors.orange,
                                 ),
                               );
                             }
                           },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColor.appSecondary,
+                            backgroundColor: AppColor.getInteractivePrimary(
+                              context,
+                            ),
                             foregroundColor: Colors.white,
                             textStyle: const TextStyle(
                               fontWeight: FontWeight.bold,
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24,
+                              vertical: 12,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
                             ),
                           ),
                           child: const Text('Add Contact'),
@@ -292,9 +537,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     style: TextStyle(fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 8),
-                  ..._emergencyContacts.asMap().entries.map((entry) {
+                  ..._guardianService.guardians.asMap().entries.map((entry) {
                     int index = entry.key;
-                    Map<String, String> contact = entry.value;
+                    Guardian guardian = entry.value;
                     return Container(
                       margin: const EdgeInsets.only(bottom: 8),
                       padding: const EdgeInsets.all(8),
@@ -322,7 +567,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ),
                             child: Center(
                               child: Text(
-                                contact['initials']!,
+                                guardian.name
+                                    .trim()
+                                    .split(' ')
+                                    .where((n) => n.isNotEmpty)
+                                    .map((n) => n[0])
+                                    .take(2)
+                                    .join()
+                                    .toUpperCase(),
                                 style: const TextStyle(
                                   color: Colors.white,
                                   fontWeight: FontWeight.bold,
@@ -337,16 +589,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  contact['name']!,
+                                  guardian.name,
                                   style: const TextStyle(
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
                                 Text(
-                                  contact['phone']!,
+                                  guardian.phone,
                                   style: TextStyle(
                                     color: Colors.grey.shade600,
                                     fontSize: 12,
+                                  ),
+                                ),
+                                Text(
+                                  guardian.relation,
+                                  style: TextStyle(
+                                    color: Colors.grey.shade500,
+                                    fontSize: 11,
+                                    fontStyle: FontStyle.italic,
                                   ),
                                 ),
                               ],
@@ -357,10 +617,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             children: [
                               IconButton(
                                 onPressed: () {
-                                  _contactNameController.text =
-                                      contact['name']!;
-                                  _contactPhoneController.text =
-                                      contact['phone']!;
+                                  _contactNameController.text = guardian.name;
+                                  _contactPhoneController.text = guardian.phone;
+                                  _contactRelationController.text =
+                                      guardian.relation;
                                   _showEditContactDialog(index, setDialogState);
                                 },
                                 icon: const Icon(
@@ -372,7 +632,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               IconButton(
                                 onPressed: () {
                                   setState(() {
-                                    _emergencyContacts.removeAt(index);
+                                    _guardianService.removeGuardian(
+                                      guardian.id,
+                                    );
                                   });
                                   setDialogState(() {});
                                   ScaffoldMessenger.of(
@@ -423,17 +685,91 @@ class _ProfileScreenState extends State<ProfileScreen> {
           children: [
             TextField(
               controller: _contactNameController,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Name',
-                border: OutlineInputBorder(),
+                labelStyle: TextStyle(
+                  color: AppColor.getTextPrimary(context),
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+                hintText: 'Enter contact name',
+                hintStyle: TextStyle(color: AppColor.getTextTertiary(context)),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(
+                    color: AppColor.getContainerBorder(context),
+                    width: 1,
+                  ),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(
+                    color: AppColor.getContainerBorder(context),
+                    width: 1,
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(
+                    color: AppColor.getInteractivePrimary(context),
+                    width: 2,
+                  ),
+                ),
+                filled: true,
+                fillColor: AppColor.getContainerBackground(context),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+              ),
+              style: TextStyle(
+                color: AppColor.getTextPrimary(context),
+                fontSize: 14,
               ),
             ),
             const SizedBox(height: 16),
             TextField(
               controller: _contactPhoneController,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Phone',
-                border: OutlineInputBorder(),
+                labelStyle: TextStyle(
+                  color: AppColor.getTextPrimary(context),
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+                hintText: 'Enter phone number',
+                hintStyle: TextStyle(color: AppColor.getTextTertiary(context)),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(
+                    color: AppColor.getContainerBorder(context),
+                    width: 1,
+                  ),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(
+                    color: AppColor.getContainerBorder(context),
+                    width: 1,
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(
+                    color: AppColor.getInteractivePrimary(context),
+                    width: 2,
+                  ),
+                ),
+                filled: true,
+                fillColor: AppColor.getContainerBackground(context),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+              ),
+              style: TextStyle(
+                color: AppColor.getTextPrimary(context),
+                fontSize: 14,
               ),
             ),
           ],
@@ -445,23 +781,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
           ElevatedButton(
             onPressed: () {
-              if (_contactNameController.text.isNotEmpty &&
-                  _contactPhoneController.text.isNotEmpty) {
+              if (_contactNameController.text.trim().isNotEmpty &&
+                  _contactPhoneController.text.trim().isNotEmpty &&
+                  _contactRelationController.text.trim().isNotEmpty) {
+                Guardian updatedGuardian = Guardian(
+                  id: _guardianService.guardians[index].id,
+                  name: _contactNameController.text.trim(),
+                  phone: _contactPhoneController.text.trim(),
+                  relation: _contactRelationController.text.trim(),
+                );
+
                 setState(() {
-                  _emergencyContacts[index] = {
-                    'name': _contactNameController.text,
-                    'phone': _contactPhoneController.text,
-                    'initials': _contactNameController.text
-                        .split(' ')
-                        .map((n) => n[0])
-                        .take(2)
-                        .join()
-                        .toUpperCase(),
-                  };
+                  _guardianService.updateGuardian(
+                    updatedGuardian.id,
+                    updatedGuardian,
+                  );
                 });
                 setDialogState(() {});
                 _contactNameController.clear();
                 _contactPhoneController.clear();
+                _contactRelationController.clear();
                 Navigator.pop(context);
                 ScaffoldMessenger.of(mainContext).showSnackBar(
                   const SnackBar(
@@ -518,7 +857,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     const SizedBox(height: 15),
 
                     EmergencyContactsSection(
-                      emergencyContacts: _emergencyContacts,
+                      emergencyContacts: _guardianService.guardians
+                          .map(
+                            (g) => {
+                              'name': g.name,
+                              'phone': g.phone,
+                              'initials': g.name
+                                  .trim()
+                                  .split(' ')
+                                  .where((n) => n.isNotEmpty)
+                                  .map((n) => n[0])
+                                  .take(2)
+                                  .join()
+                                  .toUpperCase(),
+                            },
+                          )
+                          .toList(),
                       onEditContacts: _showEmergencyContactsDialog,
                     ),
 
@@ -570,21 +924,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                     // App Info
                     Column(
-                      children: const [
+                      children: [
                         Text(
                           'SafeMap v1.0.0',
                           style: TextStyle(
                             fontSize: 12,
-                            color: Colors.grey,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurfaceVariant,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
-                        SizedBox(height: 4),
+                        const SizedBox(height: 4),
                         Text(
                           'Making Pakistan safer for everyone',
                           style: TextStyle(
                             fontSize: 12,
-                            color: Colors.grey,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurfaceVariant,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -641,15 +999,23 @@ class ProfileHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: _cardDecoration(
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFFF3E8FF), Color(0xFFFCE8F8), Color(0xFFFFE6F0)],
+          colors: isDark
+              ? [
+                  const Color(0xFF1E293B),
+                  const Color(0xFF334155),
+                  const Color(0xFF475569),
+                ]
+              : [Color(0xFFF3E8FF), Color(0xFFFCE8F8), Color(0xFFFFE6F0)],
         ),
-        borderColor: const Color(0xFFE9D8FF),
+        borderColor: isDark ? const Color(0xFF475569) : const Color(0xFFE9D8FF),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -664,11 +1030,14 @@ class ProfileHeader extends StatelessWidget {
                   height: 70,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.white, width: 4),
+                    border: Border.all(
+                      color: isDark ? const Color(0xFF475569) : Colors.white,
+                      width: 4,
+                    ),
                     gradient: LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
-                      colors: [AppColor.appSecondary, AppColor.appPrimary],
+                      colors: AppColor.getPrimaryGradient(context),
                     ),
                     boxShadow: const [
                       BoxShadow(
@@ -702,9 +1071,11 @@ class ProfileHeader extends StatelessWidget {
                             ),
                             child: Center(
                               child: Text(
-                                userName.isNotEmpty
+                                userName.trim().isNotEmpty
                                     ? userName
+                                          .trim()
                                           .split(' ')
+                                          .where((n) => n.isNotEmpty)
                                           .map((n) => n[0])
                                           .take(2)
                                           .join()
@@ -764,10 +1135,10 @@ class ProfileHeader extends StatelessWidget {
                     Expanded(
                       child: Text(
                         userName,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF111827),
+                          color: AppColor.getTextPrimary(context),
                         ),
                       ),
                     ),
@@ -780,12 +1151,14 @@ class ProfileHeader extends StatelessWidget {
                       child: Container(
                         padding: const EdgeInsets.all(6),
                         decoration: BoxDecoration(
-                          color: AppColor.appSecondary.withValues(alpha: 0.1),
+                          color: AppColor.getInteractivePrimary(
+                            context,
+                          ).withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Icon(
                           Icons.edit,
-                          color: AppColor.appSecondary,
+                          color: AppColor.getIconPrimary(context),
                           size: 16,
                         ),
                       ),
@@ -795,35 +1168,37 @@ class ProfileHeader extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   userEmail,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 13,
-                    color: Color(0xFF6B7280),
+                    color: AppColor.getTextSecondary(context),
                     fontWeight: FontWeight.w500,
                   ),
                 ),
                 const SizedBox(height: 4),
-                const Text(
+                Text(
                   'Member since Jan 2025',
                   style: TextStyle(
                     fontSize: 13,
-                    color: Color(0xFF6B7280),
+                    color: AppColor.getTextSecondary(context),
                     fontWeight: FontWeight.w500,
                   ),
                 ),
                 const SizedBox(height: 10),
                 Row(
-                  children: const [
-                    BadgeWidget(
+                  children: [
+                    const BadgeWidget(
                       text: 'Verified',
                       filled: true,
                       gradientFrom: Color(0xFF6D28D9),
                       gradientTo: Color(0xFFDB2777),
                     ),
-                    SizedBox(width: 8),
+                    const SizedBox(width: 8),
                     BadgeWidget(
                       text: 'Active Guardian',
                       filled: false,
-                      borderColor: Color(0xFFE9D8FF),
+                      borderColor: isDark
+                          ? const Color(0xFF4B5563)
+                          : const Color(0xFFE9D8FF),
                     ),
                   ],
                 ),
@@ -843,18 +1218,24 @@ class StatsCards extends StatelessWidget {
   const StatsCards({super.key});
 
   Widget _buildStat({
+    required BuildContext context,
     required Widget icon,
     required String value,
     required String label,
     required Gradient gradient,
     required Color valueColor,
   }) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colorScheme.surfaceContainerLowest,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE6E6F0), width: 1.4),
+        border: Border.all(
+          color: isDark ? const Color(0xFF334155) : const Color(0xFFE6E6F0),
+          width: 1.4,
+        ),
       ),
       child: Column(
         children: [
@@ -886,9 +1267,9 @@ class StatsCards extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
-              color: Color(0xFF6B7280),
+              color: colorScheme.onSurfaceVariant,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -904,6 +1285,7 @@ class StatsCards extends StatelessWidget {
       children: [
         Expanded(
           child: _buildStat(
+            context: context,
             icon: const Icon(LucideIcons.shield, size: 22, color: Colors.white),
             value: '23',
             label: 'Safe Walks',
@@ -916,6 +1298,7 @@ class StatsCards extends StatelessWidget {
         const SizedBox(width: 12),
         Expanded(
           child: _buildStat(
+            context: context,
             icon: const Icon(LucideIcons.mapPin, size: 22, color: Colors.white),
             value: '5',
             label: 'Reports',
@@ -928,6 +1311,7 @@ class StatsCards extends StatelessWidget {
         const SizedBox(width: 12),
         Expanded(
           child: _buildStat(
+            context: context,
             icon: const Icon(LucideIcons.award, size: 22, color: Colors.white),
             value: '85',
             label: 'Safety Points',
@@ -1028,18 +1412,23 @@ class EmergencyContactsSection extends StatelessWidget {
   });
 
   Widget _contactTile(
+    BuildContext context,
     String initials,
     String name,
     String phone,
     Color from,
     Color to,
   ) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF9FAFB),
+        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.45),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE9E9F0)),
+        border: Border.all(
+          color: isDark ? const Color(0xFF334155) : const Color(0xFFE9E9F0),
+        ),
       ),
       child: Row(
         children: [
@@ -1049,7 +1438,12 @@ class EmergencyContactsSection extends StatelessWidget {
             decoration: BoxDecoration(
               gradient: LinearGradient(colors: [from, to]),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFF3F4F6), width: 2),
+              border: Border.all(
+                color: isDark
+                    ? const Color(0xFF1F2937)
+                    : const Color(0xFFF3F4F6),
+                width: 2,
+              ),
             ),
             child: Center(
               child: Text(
@@ -1068,18 +1462,18 @@ class EmergencyContactsSection extends StatelessWidget {
               children: [
                 Text(
                   name,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF111827),
+                    color: colorScheme.onSurface,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   phone,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
-                    color: Color(0xFF6B7280),
+                    color: colorScheme.onSurfaceVariant,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -1093,12 +1487,17 @@ class EmergencyContactsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colorScheme.surfaceContainerLowest,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE6E6F0), width: 1.4),
+        border: Border.all(
+          color: isDark ? const Color(0xFF334155) : const Color(0xFFE6E6F0),
+          width: 1.4,
+        ),
       ),
       child: Column(
         children: [
@@ -1106,15 +1505,19 @@ class EmergencyContactsSection extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Row(
-                children: const [
-                  Icon(LucideIcons.users, color: Color(0xFF6D28D9), size: 20),
-                  SizedBox(width: 8),
+                children: [
+                  const Icon(
+                    LucideIcons.users,
+                    color: Color(0xFF6D28D9),
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
                   Text(
                     'Emergency Contacts',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF111827),
+                      color: colorScheme.onSurface,
                     ),
                   ),
                 ],
@@ -1156,6 +1559,7 @@ class EmergencyContactsSection extends StatelessWidget {
               return Padding(
                 padding: const EdgeInsets.only(bottom: 8),
                 child: _contactTile(
+                  context,
                   contact['initials']!,
                   contact['name']!,
                   contact['phone']!,
@@ -1197,15 +1601,17 @@ class PrivacySettingsSection extends StatelessWidget {
   });
 
   Widget _settingTile({
+    required BuildContext context,
     required String title,
     required String subtitle,
     required bool value,
     required ValueChanged<bool> onChanged,
   }) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFFF9FAFB),
+        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.45),
         borderRadius: BorderRadius.circular(14),
       ),
       child: Row(
@@ -1216,18 +1622,18 @@ class PrivacySettingsSection extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF111827),
+                    color: colorScheme.onSurface,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   subtitle,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
-                    color: Color(0xFF6B7280),
+                    color: colorScheme.onSurfaceVariant,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -1250,25 +1656,30 @@ class PrivacySettingsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colorScheme.surfaceContainerLowest,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE6E6F0), width: 1.4),
+        border: Border.all(
+          color: isDark ? const Color(0xFF334155) : const Color(0xFFE6E6F0),
+          width: 1.4,
+        ),
       ),
       child: Column(
         children: [
           Row(
-            children: const [
-              Icon(LucideIcons.shield, color: Color(0xFF6D28D9)),
-              SizedBox(width: 8),
+            children: [
+              const Icon(LucideIcons.shield, color: Color(0xFF6D28D9)),
+              const SizedBox(width: 8),
               Text(
                 'Privacy & Safety',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF111827),
+                  color: colorScheme.onSurface,
                 ),
               ),
             ],
@@ -1277,6 +1688,7 @@ class PrivacySettingsSection extends StatelessWidget {
           Column(
             children: [
               _settingTile(
+                context: context,
                 title: 'Anonymous Reporting',
                 subtitle: 'Keep your identity private',
                 value: anonymousReporting,
@@ -1284,6 +1696,7 @@ class PrivacySettingsSection extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               _settingTile(
+                context: context,
                 title: 'Location Services',
                 subtitle: 'For accurate safety scores',
                 value: locationServices,
@@ -1291,6 +1704,7 @@ class PrivacySettingsSection extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               _settingTile(
+                context: context,
                 title: 'Voice Commands',
                 subtitle: 'Hands-free panic button',
                 value: voiceCommands,
@@ -1326,15 +1740,17 @@ class NotificationsSettingsSection extends StatelessWidget {
   });
 
   Widget _notificationTile({
+    required BuildContext context,
     required String title,
     required String subtitle,
     required bool value,
     required ValueChanged<bool> onChanged,
   }) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
       decoration: BoxDecoration(
-        color: const Color(0xFFF9FAFB),
+        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.45),
         borderRadius: BorderRadius.circular(14),
       ),
       child: Row(
@@ -1345,18 +1761,18 @@ class NotificationsSettingsSection extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF111827),
+                    color: colorScheme.onSurface,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   subtitle,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
-                    color: Color(0xFF6B7280),
+                    color: colorScheme.onSurfaceVariant,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -1379,25 +1795,30 @@ class NotificationsSettingsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colorScheme.surfaceContainerLowest,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE6E6F0), width: 1.4),
+        border: Border.all(
+          color: isDark ? const Color(0xFF334155) : const Color(0xFFE6E6F0),
+          width: 1.4,
+        ),
       ),
       child: Column(
         children: [
           Row(
-            children: const [
-              Icon(LucideIcons.bell, color: Color(0xFF6D28D9)),
-              SizedBox(width: 8),
+            children: [
+              const Icon(LucideIcons.bell, color: Color(0xFF6D28D9)),
+              const SizedBox(width: 8),
               Text(
                 'Notifications',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF111827),
+                  color: colorScheme.onSurface,
                 ),
               ),
             ],
@@ -1406,6 +1827,7 @@ class NotificationsSettingsSection extends StatelessWidget {
           Column(
             children: [
               _notificationTile(
+                context: context,
                 title: 'Safety Alerts',
                 subtitle: 'High-risk area warnings',
                 value: safetyAlerts,
@@ -1413,6 +1835,7 @@ class NotificationsSettingsSection extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               _notificationTile(
+                context: context,
                 title: 'AI Recommendations',
                 subtitle: 'Route suggestions',
                 value: aiRecommendations,
@@ -1420,6 +1843,7 @@ class NotificationsSettingsSection extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               _notificationTile(
+                context: context,
                 title: 'Community Updates',
                 subtitle: 'New reports nearby',
                 value: communityUpdates,
@@ -1440,20 +1864,27 @@ class MenuOptionsSection extends StatelessWidget {
   const MenuOptionsSection({super.key});
 
   Widget _menuButton({
+    required BuildContext context,
     required Widget leading,
     required String title,
     VoidCallback? onTap,
   }) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return SizedBox(
       height: 50,
       child: TextButton(
         onPressed: onTap ?? () {},
         style: TextButton.styleFrom(
-          backgroundColor: Colors.transparent,
+          backgroundColor: colorScheme.surfaceContainerLowest,
+          foregroundColor: colorScheme.onSurface,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
           ),
           padding: const EdgeInsets.symmetric(horizontal: 12),
+          side: BorderSide(
+            color: isDark ? const Color(0xFF334155) : const Color(0xFFE5E7EB),
+          ),
         ),
         child: Row(
           children: [
@@ -1461,7 +1892,7 @@ class MenuOptionsSection extends StatelessWidget {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: const Color(0xFFF3F4F6),
+                color: colorScheme.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Center(child: leading),
@@ -1470,14 +1901,14 @@ class MenuOptionsSection extends StatelessWidget {
             Expanded(
               child: Text(
                 title,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF111827),
+                  color: colorScheme.onSurface,
                 ),
               ),
             ),
-            const Icon(LucideIcons.chevronRight, color: Color(0xFF9CA3AF)),
+            Icon(LucideIcons.chevronRight, color: colorScheme.onSurfaceVariant),
           ],
         ),
       ),
@@ -1489,7 +1920,11 @@ class MenuOptionsSection extends StatelessWidget {
     return Column(
       children: [
         _menuButton(
-          leading: const Icon(LucideIcons.settings, color: Color(0xFF374151)),
+          context: context,
+          leading: Icon(
+            LucideIcons.settings,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
           title: 'Settings',
           onTap: () {
             Navigator.push(
@@ -1500,7 +1935,11 @@ class MenuOptionsSection extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         _menuButton(
-          leading: const Icon(LucideIcons.info, color: Color(0xFF374151)),
+          context: context,
+          leading: Icon(
+            LucideIcons.info,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
           title: 'About',
           onTap: () {
             Navigator.push(
@@ -1512,7 +1951,11 @@ class MenuOptionsSection extends StatelessWidget {
         const SizedBox(height: 8),
         const SizedBox(height: 8),
         _menuButton(
-          leading: const Icon(Icons.help, color: Color(0xFF374151)),
+          context: context,
+          leading: Icon(
+            Icons.help,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
           title: 'Help & Support',
           onTap: () {
             Navigator.push(
@@ -1537,6 +1980,8 @@ class LogoutButtonSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return SizedBox(
       height: 56,
       child: OutlinedButton.icon(
@@ -1551,11 +1996,14 @@ class LogoutButtonSection extends StatelessWidget {
           ),
         ),
         style: OutlinedButton.styleFrom(
-          side: const BorderSide(color: Color(0xFFFCA5A5), width: 1.6),
+          side: BorderSide(
+            color: isDark ? const Color(0xFF7F1D1D) : const Color(0xFFFCA5A5),
+            width: 1.6,
+          ),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
           ),
-          backgroundColor: Colors.white,
+          backgroundColor: colorScheme.surfaceContainerLowest,
         ),
       ),
     );
@@ -1604,17 +2052,18 @@ class BadgeWidget extends StatelessWidget {
         ),
       );
     } else {
+      final colorScheme = Theme.of(context).colorScheme;
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: colorScheme.surfaceContainerLowest,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(color: borderColor ?? const Color(0xFFE6E6F0)),
         ),
         child: Text(
           text,
-          style: const TextStyle(
-            color: Color(0xFF111827),
+          style: TextStyle(
+            color: colorScheme.onSurface,
             fontWeight: FontWeight.w700,
           ),
         ),

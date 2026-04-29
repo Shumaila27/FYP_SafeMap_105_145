@@ -99,6 +99,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
 
                 // Privacy Content
                 _buildSection(
+                  context,
                   '1. Information We Collect',
                   'We collect the following types of information:\n\n'
                       '• Location Data: GPS coordinates for real-time safety tracking\n'
@@ -107,19 +108,21 @@ class PrivacyPolicyScreen extends StatelessWidget {
                       '• Contact Information: Name, email, phone number when provided\n'
                       '• Emergency Contacts: Contact details you add for emergency situations',
                 ),
-
                 _buildSection(
+                  context,
                   '2. How We Use Your Information',
-                  'We use your information to:\n\n'
-                      '• Provide Safety Services: Real-time location tracking and safety scoring\n'
-                      '• Emergency Response: Contact emergency services and your designated contacts\n'
-                      '• Improve Services: Analyze usage patterns to enhance app functionality\n'
-                      '• Communicate: Send safety alerts and important notifications\n'
-                      '• Support: Respond to your inquiries and provide technical support',
+                  'Your information is used to provide and improve our services, ensure safety features work properly, communicate with you, and comply with legal obligations.',
                 ),
-
                 _buildSection(
-                  '3. Data Sharing and Disclosure',
+                  context,
+                  '3. Data Security',
+                  'We implement industry-standard security measures:\n\n'
+                      '• Encryption: All data is encrypted in transit and at rest\n'
+                      '• Access Controls: Strict authentication and authorization systems\n',
+                ),
+                _buildSection(
+                  context,
+                  '4. Data Sharing and Disclosure',
                   'We may share your information in the following circumstances:\n\n'
                       '• Emergency Services: With your consent during emergency situations\n'
                       '• Law Enforcement: When required by law or to protect user safety\n'
@@ -127,80 +130,40 @@ class PrivacyPolicyScreen extends StatelessWidget {
                       '• Aggregated Data: Anonymized data for research and improvement\n\n'
                       'We never sell your personal information to third parties.',
                 ),
-
                 _buildSection(
-                  '4. Data Security',
-                  'We implement industry-standard security measures:\n\n'
-                      '• Encryption: All data is encrypted in transit and at rest\n'
-                      '• Access Controls: Strict authentication and authorization systems\n'
-                      '• Regular Audits: Periodic security assessments and updates\n'
-                      '• Data Minimization: We collect only necessary information\n'
-                      '• Secure Storage: Your data is stored in secure, redundant facilities',
+                  context,
+                  '5. Data Sharing',
+                  'We do not sell your personal information. We only share data when required by law, with emergency services during active emergencies, or with service providers who assist in our operations.',
                 ),
-
                 _buildSection(
-                  '5. Your Privacy Rights',
-                  'You have the following rights regarding your data:\n\n'
-                      '• Access: Request a copy of your personal information\n'
-                      '• Correction: Update or correct inaccurate information\n'
-                      '• Deletion: Request removal of your personal data\n'
-                      '• Portability: Transfer your data to other services\n'
-                      '• Opt-out: Disable certain data collection features',
+                  context,
+                  '6. Your Rights',
+                  'You have the right to access, update, or delete your personal information. You can also control data sharing preferences and request data export.',
                 ),
-
                 _buildSection(
-                  '6. Location Data and Privacy',
-                  'SafeMap uses location data for safety purposes:\n\n'
-                      '• Precise Location: Required for accurate safety scoring and emergency response\n'
-                      '• Background Location: Only when safety features are active\n'
-                      '• Location History: Stored for safety analysis and route optimization\n'
-                      '• Anonymous Mode: Option to use app without precise location tracking\n\n'
-                      'You can control location settings in your device preferences.',
-                ),
-
-                _buildSection(
+                  context,
                   '7. Cookies and Tracking',
-                  'We use minimal tracking technologies:\n\n'
-                      '• Essential Cookies: Required for app functionality\n'
-                      '• Analytics: Anonymous usage statistics to improve services\n'
-                      '• No Third-Party Advertising: We do not use tracking for advertising\n'
-                      '• Local Storage: Most data is stored locally on your device',
+                  'We use minimal cookies and tracking technologies essential for app functionality and security. Third-party analytics are used with anonymized data.',
                 ),
-
                 _buildSection(
+                  context,
                   '8. Children\'s Privacy',
-                  'SafeMap is not intended for children under 13:\n\n'
-                      '• We do not knowingly collect information from children\n'
-                      '• Parents can request removal of their child\'s data\n'
-                      '• Additional verification may be required for minor accounts\n'
-                      '• Educational content about online safety is available',
+                  'SafeMap is not intended for children under 13. We do not knowingly collect personal information from children under 13.',
                 ),
-
                 _buildSection(
+                  context,
                   '9. International Data Transfers',
-                  'Your data may be transferred internationally:\n\n'
-                      '• Global Infrastructure: Servers located in multiple countries\n'
-                      '• Adequate Protection: All transfers maintain privacy standards\n'
-                      '• Legal Compliance: Follow applicable data protection laws\n'
-                      '• Your Consent: Continued use constitutes agreement to transfers',
+                  'Your data may be transferred to and processed in countries other than your own, where we have service providers and infrastructure.',
                 ),
-
                 _buildSection(
-                  '10. Policy Updates',
-                  'We may update this privacy policy:\n\n'
-                      '• Notification: Users will be informed of significant changes\n'
-                      '• Effective Date: Changes take effect upon posting\n'
-                      '• Continued Use: Ongoing use indicates acceptance\n'
-                      '• Review Period: 30 days to review major changes',
+                  context,
+                  '10. Changes to This Policy',
+                  'We may update this privacy policy occasionally. We will notify you of significant changes by email or through the app.',
                 ),
-
                 _buildSection(
+                  context,
                   '11. Contact Us',
-                  'For privacy-related questions or concerns:\n\n'
-                      '• Email: privacy@safemap.com\n'
-                      '• Phone: +92-300-1234567\n'
-                      '• Address: SafeMap Inc., Privacy Department, Karachi, Pakistan\n'
-                      '• Response Time: We respond within 48 hours',
+                  'For privacy-related questions or concerns, please contact our privacy officer at privacy@safemap.app',
                 ),
 
                 const SizedBox(height: 32),
@@ -240,26 +203,35 @@ class PrivacyPolicyScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSection(String title, String content) {
+  Widget _buildSection(BuildContext context, String title, String content) {
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColor.getContainerBackground(context),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: AppColor.getContainerBorder(context),
+          width: 1,
+        ),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF111827),
+              color: AppColor.getTextPrimary(context),
             ),
           ),
           const SizedBox(height: 8),
           Text(
             content,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
-              color: Color(0xFF4B5563),
+              color: AppColor.getTextSecondary(context),
               height: 1.5,
             ),
           ),

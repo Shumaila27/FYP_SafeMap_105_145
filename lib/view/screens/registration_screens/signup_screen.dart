@@ -44,8 +44,9 @@ class _SignupScreenState extends State<SignupScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: colorScheme.surface,
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
@@ -164,7 +165,9 @@ class _SignupScreenState extends State<SignupScreen> {
                                   padding: EdgeInsets.symmetric(horizontal: 10.w),
                                   child: Text(
                                     "or continue with",
-                                    style: AppTextStyle.medium(color: Colors.black),
+                                    style: AppTextStyle.medium(
+                                      color: colorScheme.onSurface,
+                                    ),
                                   ),
                                 ),
                                 Expanded(child: Divider(color: Colors.grey[500], thickness: 1.5)),
@@ -193,7 +196,7 @@ class _SignupScreenState extends State<SignupScreen> {
                             label: Text(
                               "Google",
                               style: AppTextStyle.regular(
-                                color: Colors.black,
+                                color: colorScheme.onSurface,
                               ).copyWith(
                                 fontWeight: FontWeight.w600,
                                 fontSize: 14.sp,
@@ -201,9 +204,9 @@ class _SignupScreenState extends State<SignupScreen> {
                             ),
                             style: ElevatedButton.styleFrom(
                               elevation: 4,
-                              shadowColor: Colors.grey.withOpacity(0.3),
-                              backgroundColor: Colors.white,
-                              surfaceTintColor: Colors.white,
+                              shadowColor: Colors.grey.withValues(alpha: 0.3),
+                              backgroundColor: colorScheme.surfaceContainerLowest,
+                              surfaceTintColor: colorScheme.surfaceContainerLowest,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(35.r),
                                 side: const BorderSide(color: Color(0xFFE0E0E0), width: 1),
@@ -211,7 +214,7 @@ class _SignupScreenState extends State<SignupScreen> {
                               padding: EdgeInsets.symmetric(vertical: 10.h, horizontal: 14.w),
                             ).copyWith(
                               overlayColor: WidgetStatePropertyAll(
-                                Colors.grey.withOpacity(0.1),
+                                Colors.grey.withValues(alpha: 0.1),
                               ),
                             ),
                           ),
@@ -220,7 +223,9 @@ class _SignupScreenState extends State<SignupScreen> {
                             children: [
                               Text(
                                 "Already have an account?",
-                                style: AppTextStyle.regular(color: Colors.black87),
+                                style: AppTextStyle.regular(
+                                  color: colorScheme.onSurface,
+                                ),
                               ),
                               TextButton(
                                 onPressed: () {

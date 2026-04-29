@@ -10,9 +10,10 @@ class ChatBotScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = Provider.of<ChatController>(context);
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      backgroundColor: AppColor.appBackground, // custom background
+      backgroundColor: colorScheme.surface,
       body: SafeArea(
         child: Column(
           children: [
@@ -22,7 +23,7 @@ class ChatBotScreen extends StatelessWidget {
                 padding: const EdgeInsets.only(top: 10),
                 itemCount: controller.messages.length,
                 itemBuilder: (context, index) {
-                  return _messageBubble(controller.messages[index]);
+                  return _messageBubble(context, controller.messages[index]);
                 },
               ),
             ),
@@ -33,9 +34,9 @@ class ChatBotScreen extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  _quickAction("Report Incident", controller),
-                  _quickAction("Find safe route", controller),
-                  _quickAction("Help", controller),
+                  _quickAction(context, "Report Incident", controller),
+                  _quickAction(context, "Find safe route", controller),
+                  _quickAction(context, "Help", controller),
                 ],
               ),
             ),
@@ -51,12 +52,26 @@ class ChatBotScreen extends StatelessWidget {
                       onSubmitted: controller.sendMessage,
                       decoration: InputDecoration(
                         hintText: "Type your message...",
+                        hintStyle: TextStyle(
+                          color: colorScheme.onSurfaceVariant,
+                        ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(30),
                           borderSide: BorderSide(color: AppColor.appSecondary),
                         ),
-                        contentPadding:
-                        const EdgeInsets.symmetric(horizontal: 16),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(30),
+                          borderSide: BorderSide(color: colorScheme.outline),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(30),
+                          borderSide: BorderSide(color: colorScheme.primary),
+                        ),
+                        filled: true,
+                        fillColor: colorScheme.surfaceContainerLowest,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                        ),
                       ),
                     ),
                   ),
@@ -83,22 +98,24 @@ class ChatBotScreen extends StatelessWidget {
     );
   }
 
-  Widget _messageBubble(ChatMessage msg) {
+  Widget _messageBubble(BuildContext context, ChatMessage msg) {
     final isUser = msg.sender == 'user';
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Align(
       alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
       child: Column(
-        crossAxisAlignment:
-        isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+        crossAxisAlignment: isUser
+            ? CrossAxisAlignment.end
+            : CrossAxisAlignment.start,
         children: [
           Container(
             margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               color: isUser
-                  ? AppColor.appSecondary.withOpacity(0.3) // user bubble
-                  : AppColor.appPrimary.withOpacity(0.3), // bot bubble
+                  ? AppColor.appSecondary.withValues(alpha: 0.3)
+                  : AppColor.appPrimary.withValues(alpha: 0.3),
               borderRadius: BorderRadius.only(
                 topLeft: const Radius.circular(16),
                 topRight: const Radius.circular(16),
@@ -108,14 +125,17 @@ class ChatBotScreen extends StatelessWidget {
             ),
             child: Text(
               msg.text,
-              style: const TextStyle(color: Colors.black),
+              style: TextStyle(color: colorScheme.onSurface),
             ),
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
             child: Text(
               msg.time,
-              style: const TextStyle(fontSize: 11, color: Colors.grey),
+              style: TextStyle(
+                fontSize: 11,
+                color: colorScheme.onSurfaceVariant,
+              ),
             ),
           ),
         ],
@@ -123,21 +143,25 @@ class ChatBotScreen extends StatelessWidget {
     );
   }
 
-
   //----------buttons like report incident while click on these button a sudden response will generate
-  Widget _quickAction(String label, ChatController controller) {
+  Widget _quickAction(
+    BuildContext context,
+    String label,
+    ChatController controller,
+  ) {
+    final colorScheme = Theme.of(context).colorScheme;
     return GestureDetector(
       onTap: () => controller.sendMessage(label),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: AppColor.appSecondary.withOpacity(0.3),
+          color: AppColor.appSecondary.withValues(alpha: 0.3),
           borderRadius: BorderRadius.circular(14),
         ),
         child: Text(
           label,
           style: TextStyle(
-            color: AppColor.appText,
+            color: colorScheme.onSurface,
             fontWeight: FontWeight.w500,
           ),
         ),

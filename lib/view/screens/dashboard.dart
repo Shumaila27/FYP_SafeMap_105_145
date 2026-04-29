@@ -16,7 +16,7 @@ class DashBoardScreen extends StatefulWidget {
 class _DashBoardScreenState extends State<DashBoardScreen> {
   int currentIndex = 0;
 
-  List screens = [
+  final List<Widget> screens = [
     const MapScreen(), // index 0
     const AIRecommendationScreen(), // index 1
     const SafeWalkScreen(),
@@ -34,7 +34,10 @@ class _DashBoardScreenState extends State<DashBoardScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: screens[currentIndex],
-      bottomNavigationBar: CustomNav(),
+      bottomNavigationBar: CustomNavBar(
+        currentIndex: currentIndex,
+        onTap: onTap,
+      ),
     );
   }
 }

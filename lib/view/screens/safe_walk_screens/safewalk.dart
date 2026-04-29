@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../Models/guardian_model.dart';
+import '../../../services/guardian_service.dart';
 import '../../../utils/app_colors.dart';
 import '../../widgets/app_bar.dart';
 
@@ -16,14 +17,193 @@ class _SafeWalkScreenState extends State<SafeWalkScreen> {
   bool showAddGuardian = false;
   String destination = '';
   List<String> selectedGuardians = [];
+  final GuardianService _guardianService = GuardianService();
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize with shared service
+    _guardianService.initializeGuardians();
+  }
 
   //***************Functions*********************//
   void startSafeWalk() {
-    if (destination.isNotEmpty && selectedGuardians.isNotEmpty) {
-      setState(() {
-        isWalking = true;
-      });
+    // Check if destination is entered
+    if (destination.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter your destination first'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
     }
+
+    // Check if guardians are selected
+    if (selectedGuardians.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select at least one guardian'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    // Show confirmation dialog
+    _showSafeWalkStartConfirmation();
+  }
+
+  void _showSafeWalkStartConfirmation() {
+    final selectedGuardianNames = _guardianService.guardians
+        .where((g) => selectedGuardians.contains(g.id))
+        .map((g) => g.name)
+        .join(', ');
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(Icons.shield, color: AppColor.getInteractivePrimary(context)),
+            const SizedBox(width: 8),
+            const Text('Start Safe Walk'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'You\'re about to start a Safe Walk to:',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: AppColor.getTextPrimary(context),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColor.getContainerBackground(context),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: AppColor.getContainerBorder(context)),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.location_on,
+                    color: AppColor.getInteractivePrimary(context),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      destination,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w500,
+                        color: AppColor.getTextPrimary(context),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Your selected guardians:',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: AppColor.getTextPrimary(context),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColor.getContainerBackground(context),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: AppColor.getContainerBorder(context)),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.group,
+                    color: AppColor.getInteractivePrimary(context),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      selectedGuardianNames,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w500,
+                        color: AppColor.getTextPrimary(context),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Colors.green.withOpacity(0.1)
+                    : Colors.green.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.green.withOpacity(0.3)),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.check_circle, color: Colors.green, size: 20),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Your guardians will receive live location updates',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? Colors.green[300]
+                            : Colors.green[700],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              'Cancel',
+              style: TextStyle(color: AppColor.getTextSecondary(context)),
+            ),
+          ),
+          ElevatedButton.icon(
+            onPressed: () {
+              Navigator.pop(context);
+              setState(() {
+                isWalking = true;
+              });
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Safe Walk started successfully!'),
+                  backgroundColor: Colors.green,
+                ),
+              );
+            },
+            icon: const Icon(Icons.shield, color: Colors.white),
+            label: const Text('Start Safe Walk'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColor.getInteractivePrimary(context),
+              foregroundColor: Colors.white,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   void endSafeWalk() {
@@ -44,59 +224,43 @@ class _SafeWalkScreenState extends State<SafeWalkScreen> {
     });
   }
 
-  void showAddGuardianDialog() {
+  void triggerEmergencyAlert() {
     showDialog(
       context: context,
-      builder: (context) {
-        TextEditingController nameController = TextEditingController();
-        TextEditingController phoneController = TextEditingController();
-        TextEditingController relationController = TextEditingController();
-
-        return AlertDialog(
-          title: const Text('Add Guardian'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: nameController,
-                decoration: const InputDecoration(labelText: 'Name'),
-              ),
-              TextField(
-                controller: phoneController,
-                decoration: const InputDecoration(labelText: 'Phone Number'),
-              ),
-              TextField(
-                controller: relationController,
-                decoration: const InputDecoration(labelText: 'Relation'),
-              ),
-            ],
+      builder: (context) => AlertDialog(
+        title: const Text("Send Emergency Alert?"),
+        content: const Text(
+          "This will alert all selected guardians with your latest known location.",
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Cancel"),
           ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                // You can add logic to save new guardian here
-                Navigator.pop(context);
-              },
-              child: const Text('Add Guardian'),
-            ),
-          ],
-        );
-      },
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text("Emergency alert sent to selected guardians."),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            },
+            child: const Text("Send Alert"),
+          ),
+        ],
+      ),
     );
   }
 
   //***************Main Screen widgets ********************//
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
       appBar: AppMainBar(showBack: true),
-
+      backgroundColor: colorScheme.surface,
       body: Column(
         children: [
           const SafeWalkAppBar(),
@@ -115,6 +279,8 @@ class _SafeWalkScreenState extends State<SafeWalkScreen> {
 
   //Component 1: Setup means main view View
   Widget buildSetupView() {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -136,39 +302,41 @@ class _SafeWalkScreenState extends State<SafeWalkScreen> {
           const SizedBox(height: 16),
 
           // ⭐ GUARDIAN SELECTION
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          const Row(
             children: [
-              const Text(
+              Text(
                 'Select Guardians',
                 style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              TextButton.icon(
-                onPressed: showAddGuardianDialog,
-                icon: const Icon(Icons.add),
-                label: const Text('Add New'),
               ),
             ],
           ),
 
           Column(
-            children: mockGuardians
+            children: _guardianService.guardians
                 .map(
                   (g) => Card(
                     color: selectedGuardians.contains(g.id)
-                        ? AppColor.appPrimary
-                        : Colors.purple[50],
+                        ? colorScheme.primaryContainer
+                        : colorScheme.surfaceContainerHighest.withValues(
+                            alpha: 0.4,
+                          ),
                     child: ListTile(
                       leading: CircleAvatar(
                         backgroundColor: selectedGuardians.contains(g.id)
                             ? AppColor.appSecondary
                             : AppColor.appPrimary,
                         child: Text(
-                          g.name.split(' ').map((n) => n[0]).join(),
+                          g.name
+                              .trim()
+                              .split(' ')
+                              .where((n) => n.isNotEmpty)
+                              .map((n) => n[0])
+                              .join()
+                              .toUpperCase(),
                           style: TextStyle(
                             color: selectedGuardians.contains(g.id)
-                                ? Colors.white
-                                : Colors.black,
+                                ? colorScheme.onPrimary
+                                : colorScheme.onSurface,
                           ),
                         ),
                       ),
@@ -197,15 +365,22 @@ class _SafeWalkScreenState extends State<SafeWalkScreen> {
             width: double.infinity,
             padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
             decoration: BoxDecoration(
-              color: const Color(0xFFF3EDFF),
+              color: isDark ? const Color(0xFF1E1B3A) : const Color(0xFFF3EDFF),
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: const Color(0xFFD9CFFF), width: 2),
+              border: Border.all(
+                color: isDark
+                    ? const Color(0xFF4C3D8F)
+                    : const Color(0xFFD9CFFF),
+                width: 2,
+              ),
             ),
             child: Center(
               child: Text(
                 "Select at least one guardian to start Safe Walk",
                 style: TextStyle(
-                  color: Colors.deepPurple.shade700,
+                  color: isDark
+                      ? const Color(0xFFC4B5FD)
+                      : Colors.deepPurple.shade700,
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
                 ),
@@ -220,20 +395,22 @@ class _SafeWalkScreenState extends State<SafeWalkScreen> {
             width: double.infinity,
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: colorScheme.surfaceContainerLowest,
               borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: Colors.grey.shade300),
+              border: Border.all(
+                color: isDark ? const Color(0xFF334155) : Colors.grey.shade300,
+              ),
             ),
 
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   "What happens during Safe Walk?",
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
-                    color: Colors.black,
+                    color: colorScheme.onSurface,
                   ),
                 ),
                 const SizedBox(height: 10),
@@ -270,6 +447,8 @@ class _SafeWalkScreenState extends State<SafeWalkScreen> {
 
   //Component 2: Walking View
   Widget buildWalkingView() {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -327,19 +506,27 @@ class _SafeWalkScreenState extends State<SafeWalkScreen> {
                 ),
                 const SizedBox(height: 12),
                 Column(
-                  children: mockGuardians
+                  children: _guardianService.guardians
                       .where((g) => selectedGuardians.contains(g.id))
                       .map(
                         (g) => Card(
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          color: Colors.green[50],
+                          color: isDark
+                              ? const Color(0xFF14322C)
+                              : Colors.green[50],
                           child: ListTile(
                             leading: CircleAvatar(
                               backgroundColor: AppColor.appSecondary,
                               child: Text(
-                                g.name.split(' ').map((n) => n[0]).join(),
+                                g.name
+                                    .trim()
+                                    .split(' ')
+                                    .where((n) => n.isNotEmpty)
+                                    .map((n) => n[0])
+                                    .join()
+                                    .toUpperCase(),
                                 style: const TextStyle(color: Colors.white),
                               ),
                             ),
@@ -378,7 +565,7 @@ class _SafeWalkScreenState extends State<SafeWalkScreen> {
         ),
         // Safety Tips
         Card(
-          color: Colors.amber[50],
+          color: isDark ? const Color(0xFF3A2B12) : Colors.amber[50],
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
@@ -388,7 +575,7 @@ class _SafeWalkScreenState extends State<SafeWalkScreen> {
               '💡 Stay alert and keep your phone accessible. Your guardians will be notified if you stop moving for more than 5 minutes.',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
-                color: Colors.amber,
+                color: isDark ? const Color(0xFFFBBF24) : Colors.amber,
               ),
             ),
           ),
@@ -400,15 +587,15 @@ class _SafeWalkScreenState extends State<SafeWalkScreen> {
           icon: const Icon(Icons.check_circle),
           label: const Text("I've Arrived Safely"),
           style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.white,
-            foregroundColor: Colors.green,
+            backgroundColor: colorScheme.surfaceContainerLowest,
+            foregroundColor: Colors.green.shade600,
             elevation: 2,
             padding: const EdgeInsets.symmetric(vertical: 5),
           ),
         ),
         const SizedBox(height: 8),
         ElevatedButton.icon(
-          onPressed: () {},
+          onPressed: selectedGuardians.isEmpty ? null : triggerEmergencyAlert,
           icon: const Icon(Icons.phone),
           label: const Text("Emergency Alert"),
           style: ElevatedButton.styleFrom(
@@ -424,6 +611,7 @@ class _SafeWalkScreenState extends State<SafeWalkScreen> {
 
   // ✔ Reusable bullet text row
   Widget buildBullet(String text) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
       child: Row(
@@ -439,7 +627,7 @@ class _SafeWalkScreenState extends State<SafeWalkScreen> {
           Expanded(
             child: Text(
               text,
-              style: const TextStyle(fontSize: 14, color: Colors.black87),
+              style: TextStyle(fontSize: 14, color: colorScheme.onSurface),
             ),
           ),
         ],
@@ -449,6 +637,8 @@ class _SafeWalkScreenState extends State<SafeWalkScreen> {
 
   //journey info row
   Widget buildJourneyInfoRow(IconData icon, String title, String value) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
@@ -457,7 +647,7 @@ class _SafeWalkScreenState extends State<SafeWalkScreen> {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: Colors.grey[200],
+              color: isDark ? const Color(0xFF1F2937) : Colors.grey[200],
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(icon, color: AppColor.appSecondary),
@@ -468,16 +658,17 @@ class _SafeWalkScreenState extends State<SafeWalkScreen> {
             children: [
               Text(
                 title,
-                style: const TextStyle(
-                  color: Colors.grey,
+                style: TextStyle(
+                  color: colorScheme.onSurfaceVariant,
                   fontWeight: FontWeight.bold,
                 ),
               ),
               Text(
                 value,
-                style: const TextStyle(
+                style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
+                  color: colorScheme.onSurface,
                 ),
               ),
             ],
@@ -498,8 +689,10 @@ class SafeWalkAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return AppBar(
-      backgroundColor: Colors.white,
+      backgroundColor: colorScheme.surfaceContainerLowest,
       elevation: 1,
       automaticallyImplyLeading: false, // remove default back icon
       // 🔥 Title Section → Icon + Title + Subtitle
@@ -526,14 +719,14 @@ class SafeWalkAppBar extends StatelessWidget implements PreferredSizeWidget {
           const SizedBox(width: 10),
 
           // 🧠 Title + Subtitle
-          const Column(
+          Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
                 "Safe Walk",
                 style: TextStyle(
-                  color: Colors.black,
+                  color: colorScheme.onSurface,
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
                 ),
@@ -541,7 +734,10 @@ class SafeWalkAppBar extends StatelessWidget implements PreferredSizeWidget {
               SizedBox(height: 2),
               Text(
                 "Share location with trusted contacts",
-                style: TextStyle(color: Colors.black, fontSize: 13),
+                style: TextStyle(
+                  color: isDark ? colorScheme.onSurfaceVariant : Colors.black,
+                  fontSize: 13,
+                ),
               ),
             ],
           ),

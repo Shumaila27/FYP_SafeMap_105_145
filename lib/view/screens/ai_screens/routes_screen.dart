@@ -5,11 +5,28 @@ import 'package:staysafe/utils/app_colors.dart';
 
 import '../../widgets/text_fields.dart';
 
-class RoutesScreen extends StatelessWidget {
+class RoutesScreen extends StatefulWidget {
   const RoutesScreen({super.key});
 
   @override
+  State<RoutesScreen> createState() => _RoutesScreenState();
+}
+
+class _RoutesScreenState extends State<RoutesScreen> {
+  final TextEditingController startController = TextEditingController();
+  final TextEditingController destinationController = TextEditingController();
+
+  @override
+  void dispose() {
+    startController.dispose();
+    destinationController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return SingleChildScrollView(
       padding: const EdgeInsets.all(12),
       child: Column(
@@ -19,8 +36,10 @@ class RoutesScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFFF3E8FF), Color(0xFFFFE4F3)],
+              gradient: LinearGradient(
+                colors: isDark
+                    ? const [Color(0xFF1F1B3A), Color(0xFF3A1B2E)]
+                    : const [Color(0xFFF3E8FF), Color(0xFFFFE4F3)],
               ),
               borderRadius: BorderRadius.circular(20),
               border: Border.all(color: AppColor.appSecondary, width: 2),
@@ -28,24 +47,20 @@ class RoutesScreen extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(
-                  LucideIcons.zap,
-                  color:  AppColor.appSecondary,
-                  size: 28,
-                ),
+                Icon(LucideIcons.zap, color: AppColor.appSecondary, size: 28),
                 const SizedBox(width: 10),
 
                 // 💡 Wrap Column in Expanded so NO overflow!
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
+                    children: [
                       Text(
                         "Smart Route Planning",
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: Colors.black87,
+                          color: colorScheme.onSurface,
                         ),
                       ),
                       SizedBox(height: 3),
@@ -53,7 +68,7 @@ class RoutesScreen extends StatelessWidget {
                         "AI-powered route recommendations based on real-time safety data",
                         style: TextStyle(
                           fontSize: 12,
-                          color: Colors.black54,
+                          color: colorScheme.onSurfaceVariant,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -69,6 +84,7 @@ class RoutesScreen extends StatelessWidget {
           CustomTextField(
             hintText: "Starting point",
             icon: LucideIcons.mapPin,
+            controller: startController,
           ),
 
           const SizedBox(height: 12),
@@ -76,9 +92,9 @@ class RoutesScreen extends StatelessWidget {
           CustomTextField(
             hintText: "Destination",
             icon: LucideIcons.flag,
+            controller: destinationController,
           ),
           const SizedBox(height: 12),
-
 
           // 🔮 Button (no overflow)
           SizedBox(
@@ -86,11 +102,31 @@ class RoutesScreen extends StatelessWidget {
             height: 52,
             child: Container(
               decoration: BoxDecoration(
-                  color: AppColor.appSecondary,
+                color: AppColor.appSecondary,
                 borderRadius: BorderRadius.circular(14),
               ),
               child: ElevatedButton.icon(
-                onPressed: () {},
+                onPressed: () {
+                  final start = startController.text.trim();
+                  final destination = destinationController.text.trim();
+                  if (start.isEmpty || destination.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          "Please enter both starting point and destination.",
+                        ),
+                      ),
+                    );
+                    return;
+                  }
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        "Route preview ready for $start to $destination. Backend route engine comes next.",
+                      ),
+                    ),
+                  );
+                },
                 icon: const Icon(LucideIcons.sparkles, color: Colors.white),
                 label: const Text(
                   "Find Safest Route",
@@ -124,8 +160,6 @@ class RoutesScreen extends StatelessWidget {
     );
   }
 
-
-
   ///----------------Addiitional Widgets Used above----------------///
   // ---------------------------------------
   // RECOMMENDED ROUTE CARD (FIXED)
@@ -139,9 +173,7 @@ class RoutesScreen extends StatelessWidget {
         ),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: Color(0xFF6EE7B7), width: 2),
-        boxShadow: const [
-          BoxShadow(color: Colors.black12, blurRadius: 6),
-        ],
+        boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 6)],
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -309,8 +341,7 @@ class RoutesScreen extends StatelessWidget {
   // ---------------------------------------
   // SMALL COMPONENTS
   // ---------------------------------------
-  static Widget _badge(String text, Color color,
-      {bool outlined = false}) {
+  static Widget _badge(String text, Color color, {bool outlined = false}) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
@@ -333,12 +364,14 @@ class RoutesScreen extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label,
-            style: const TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-              color: Colors.black54,
-            )),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+            color: Colors.black54,
+          ),
+        ),
         const SizedBox(height: 4),
         Text(
           value,

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:staysafe/utils/app_colors.dart';
 import 'package:staysafe/utils/text_style.dart';
 
 class CustomTextField extends StatefulWidget {
@@ -9,6 +8,7 @@ class CustomTextField extends StatefulWidget {
   final TextEditingController? controller;
   final bool isPassword; // ✅ To toggle eye visibility only for password fields
   final TextInputType keyboardType;
+  final String? Function(String?)? validator;
 
   const CustomTextField({
     super.key,
@@ -17,6 +17,7 @@ class CustomTextField extends StatefulWidget {
     this.controller,
     this.isPassword = false, // ✅ default false for normal text fields
     this.keyboardType = TextInputType.text,
+    this.validator,
   });
 
   @override
@@ -28,18 +29,23 @@ class _CustomTextFieldState extends State<CustomTextField> {
 
   @override
   Widget build(BuildContext context) {
-    return TextField(
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return TextFormField(
       controller: widget.controller,
       obscureText: widget.isPassword ? _obscureText : false, // ✅ Toggle dots
       keyboardType: widget.keyboardType,
-      style: AppTextStyle.medium(color: Colors.black),
+      validator: widget.validator,
+      style: AppTextStyle.medium(color: colorScheme.onSurface),
       decoration: InputDecoration(
         hintText: widget.hintText,
-        hintStyle: AppTextStyle.regular(color: Colors.black54),
+        hintStyle: AppTextStyle.regular(
+          color: colorScheme.onSurface.withValues(alpha: 0.6),
+        ),
 
         // ✅ Prefix icon (like email or lock)
         prefixIcon: widget.icon != null
-            ? Icon(widget.icon, color: AppColor.appSecondary)
+            ? Icon(widget.icon, color: colorScheme.primary)
             : null,
 
         // ✅ Eye toggle icon (only for password fields)
@@ -54,22 +60,22 @@ class _CustomTextFieldState extends State<CustomTextField> {
             _obscureText
                 ? Icons.visibility_off_outlined
                 : Icons.visibility_outlined,
-            color: AppColor.appSecondary,
+            color: colorScheme.primary,
           ),
         )
             : null,
 
         filled: true,
-        fillColor: AppColor.appBackground, // Background color
+        fillColor: colorScheme.surface, // Background color
 
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(30.r),
-          borderSide: BorderSide(color: AppColor.appSecondary),
+          borderSide: BorderSide(color: colorScheme.primary),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(30.r),
           borderSide: BorderSide(
-            color: AppColor.appSecondary,
+            color: colorScheme.primary,
             width: 3,
           ),
         ),

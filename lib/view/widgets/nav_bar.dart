@@ -1,43 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:staysafe/utils/app_colors.dart';
-import 'package:staysafe/view/screens/ai_screens/ai.dart';
-import 'package:staysafe/view/screens/map_screen.dart';
-import 'package:staysafe/view/screens/profile.dart';
-import 'package:staysafe/view/screens/safe_walk_screens/safewalk.dart';
-import '../screens/report_screen/report_screen.dart';
 
-class CustomNav extends StatefulWidget {
-  const CustomNav({super.key});
+class CustomNavBar extends StatelessWidget {
+  final int currentIndex;
+  final ValueChanged<int> onTap;
 
-  @override
-  State<CustomNav> createState() => _CustomNavState();
-}
-
-class _CustomNavState extends State<CustomNav> {
-  int pageIndex = 0;
-
-  final pages = [
-    MapScreen(),
-    const AIRecommendationScreen(),
-    const SafeWalkScreen(),
-    const ReportScreen(),
-    ProfileScreen()
-  ];
+  const CustomNavBar({
+    super.key,
+    required this.currentIndex,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: pages[pageIndex],
-      bottomNavigationBar: buildMyNavBar(context),
-    );
+    return buildMyNavBar(context);
   }
 
   Container buildMyNavBar(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       height: 70,
       decoration: BoxDecoration(
-        color: AppColor.appSecondary,
+        color: colorScheme.primary,
         borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(20),
           topRight: Radius.circular(20),
@@ -46,23 +30,51 @@ class _CustomNavState extends State<CustomNav> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _navItem(icon: Icons.location_on, label: "Map", index: 0),
-          _navItem(icon: Icons.auto_awesome, label: "AI", index: 1),
-          _navItem(icon: LucideIcons.footprints, label: "SafeWalk", index: 2),
-          _navItem(icon: Icons.report, label: "Report", index: 3),
-          _navItem(icon: Icons.person, label: "Profile", index: 4),
+          _navItem(
+            icon: Icons.location_on,
+            label: "Map",
+            index: 0,
+            onPrimary: colorScheme.onPrimary,
+          ),
+          _navItem(
+            icon: Icons.auto_awesome,
+            label: "AI",
+            index: 1,
+            onPrimary: colorScheme.onPrimary,
+          ),
+          _navItem(
+            icon: LucideIcons.footprints,
+            label: "SafeWalk",
+            index: 2,
+            onPrimary: colorScheme.onPrimary,
+          ),
+          _navItem(
+            icon: Icons.report,
+            label: "Report",
+            index: 3,
+            onPrimary: colorScheme.onPrimary,
+          ),
+          _navItem(
+            icon: Icons.person,
+            label: "Profile",
+            index: 4,
+            onPrimary: colorScheme.onPrimary,
+          ),
         ],
       ),
     );
   }
 
-  Widget _navItem({required IconData icon, required String label, required int index}) {
-    bool isSelected = pageIndex == index;
+  Widget _navItem({
+    required IconData icon,
+    required String label,
+    required int index,
+    required Color onPrimary,
+  }) {
+    bool isSelected = currentIndex == index;
     return GestureDetector(
       onTap: () {
-        setState(() {
-          pageIndex = index;
-        });
+        onTap(index);
       },
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -70,13 +82,13 @@ class _CustomNavState extends State<CustomNav> {
           Icon(
             icon,
             size: 28,
-            color: isSelected ? Colors.white : Colors.white70,
+            color: isSelected ? onPrimary : onPrimary.withValues(alpha: 0.74),
           ),
           const SizedBox(height: 4),
           Text(
             label,
             style: TextStyle(
-              color: isSelected ? Colors.white : Colors.white70,
+              color: isSelected ? onPrimary : onPrimary.withValues(alpha: 0.74),
               fontSize: 12,
               fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
             ),

@@ -5,14 +5,16 @@ import '../../../utils/text_style.dart';
 import '../../widgets/buttons.dart';
 import '../../widgets/header.dart';
 import 'login_screen.dart';
+import 'signup_screen.dart';
 
 class MainScreen extends StatelessWidget {
   const MainScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: colorScheme.surface,
 
       body: SafeArea(
         child: Column(
@@ -78,8 +80,14 @@ class MainScreen extends StatelessWidget {
 
                         CustomButton(
                           text: "Sign Up",
-                          textColor: Colors.black,
+                          textColor: colorScheme.onPrimary,
                           buttonColor: AppColor.appSecondary,
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (_) => const SignupScreen()),
+                            );
+                          },
                         ),
                       ],
                     ),

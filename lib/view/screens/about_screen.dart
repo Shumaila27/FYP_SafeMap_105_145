@@ -79,22 +79,27 @@ class _AboutScreenState extends State<AboutScreen> {
   }
 
   Widget _buildAboutHeader() {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final textTheme = theme.textTheme;
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            AppColor.appSecondary.withValues(alpha: 0.1),
-            AppColor.appPrimary.withValues(alpha: 0.1),
-          ],
+          colors: AppColor.getPrimaryGradient(context),
         ),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColor.appSecondary.withValues(alpha: 0.2)),
+        border: Border.all(
+          color: AppColor.getInteractivePrimary(context).withValues(alpha: 0.3),
+        ),
         boxShadow: [
           BoxShadow(
-            color: AppColor.appSecondary.withValues(alpha: 0.1),
+            color: AppColor.getInteractivePrimary(
+              context,
+            ).withValues(alpha: isDark ? 0.2 : 0.1),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -105,11 +110,13 @@ class _AboutScreenState extends State<AboutScreen> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: AppColor.appSecondary,
+              color: AppColor.getInteractivePrimary(context),
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
-                  color: AppColor.appSecondary.withValues(alpha: 0.3),
+                  color: AppColor.getInteractivePrimary(
+                    context,
+                  ).withValues(alpha: 0.3),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
@@ -118,25 +125,25 @@ class _AboutScreenState extends State<AboutScreen> {
             child: const Icon(LucideIcons.info, color: Colors.white, size: 24),
           ),
           const SizedBox(width: 16),
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   'About',
-                  style: TextStyle(
+                  style: textTheme.headlineSmall?.copyWith(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF111827),
+                    color: Colors.white,
                   ),
                 ),
-                SizedBox(height: 4),
+                const SizedBox(height: 4),
                 Text(
                   'App information and legal details',
-                  style: TextStyle(
+                  style: textTheme.bodyMedium?.copyWith(
                     fontSize: 14,
-                    color: Color(0xFF6B7280),
                     fontWeight: FontWeight.w500,
+                    color: Colors.white.withValues(alpha: 0.9),
                   ),
                 ),
               ],
@@ -153,24 +160,36 @@ class _AboutScreenState extends State<AboutScreen> {
     required IconData icon,
     required VoidCallback onTap,
   }) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: const Color(0xFFF9FAFB),
+          color: AppColor.getContainerBackground(context),
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
+          border: Border.all(
+            color: AppColor.getContainerBorder(context),
+            width: 1,
+          ),
         ),
         child: Row(
           children: [
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: AppColor.appSecondary.withValues(alpha: 0.1),
+                color: AppColor.getInteractivePrimary(
+                  context,
+                ).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Icon(icon, color: AppColor.appSecondary, size: 16),
+              child: Icon(
+                icon,
+                color: AppColor.getIconPrimary(context),
+                size: 16,
+              ),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -179,18 +198,18 @@ class _AboutScreenState extends State<AboutScreen> {
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFF111827),
+                      color: AppColor.getTextPrimary(context),
                     ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     subtitle,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
-                      color: Color(0xFF6B7280),
+                      color: AppColor.getTextSecondary(context),
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -199,7 +218,7 @@ class _AboutScreenState extends State<AboutScreen> {
             ),
             Icon(
               LucideIcons.chevronRight,
-              color: const Color(0xFF9CA3AF),
+              color: AppColor.getIconSecondary(context),
               size: 16,
             ),
           ],
@@ -213,22 +232,31 @@ class _AboutScreenState extends State<AboutScreen> {
     required String subtitle,
     required IconData icon,
   }) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFF9FAFB),
+        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.55),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
+        border: Border.all(
+          color: isDark ? const Color(0xFF334155) : const Color(0xFFE5E7EB),
+          width: 1,
+        ),
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: AppColor.appSecondary.withValues(alpha: 0.1),
+              color: AppColor.brandSecondary.withValues(
+                alpha: isDark ? 0.2 : 0.1,
+              ),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Icon(icon, color: AppColor.appSecondary, size: 16),
+            child: Icon(icon, color: AppColor.brandSecondary, size: 16),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -237,18 +265,18 @@ class _AboutScreenState extends State<AboutScreen> {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
-                    color: Color(0xFF111827),
+                    color: colorScheme.onSurface,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   subtitle,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
-                    color: Color(0xFF6B7280),
+                    color: colorScheme.onSurface.withValues(alpha: 0.7),
                     fontWeight: FontWeight.w500,
                   ),
                 ),
