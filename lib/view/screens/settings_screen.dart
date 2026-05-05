@@ -105,8 +105,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final themeController = context.watch<ThemeController>();
-
     return Scaffold(
       appBar: AppMainBar(showBack: true),
       backgroundColor: Theme.of(context).colorScheme.surface,
@@ -184,9 +182,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     required ValueChanged<bool> onChanged,
     required IconData icon,
   }) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(

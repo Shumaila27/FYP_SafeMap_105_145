@@ -6,7 +6,6 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../Models/guardian_model.dart';
 import '../../services/guardian_service.dart';
 import '../../utils/app_colors.dart';
-import '../widgets/badge.dart';
 import '../widgets/app_bar.dart';
 import 'help_support_new.dart';
 import 'settings_screen.dart';
@@ -144,7 +143,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   void _showEditProfileDialog() {
-    print('Edit profile dialog called!');
     _nameController.text = _userName;
     _emailController.text = _userEmail;
 
@@ -482,8 +480,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ElevatedButton(
                           onPressed: () {
                             if (_contactNameController.text.trim().isNotEmpty &&
-                                _contactPhoneController.text.trim().isNotEmpty &&
-                                _contactRelationController.text.trim().isNotEmpty) {
+                                _contactPhoneController.text
+                                    .trim()
+                                    .isNotEmpty &&
+                                _contactRelationController.text
+                                    .trim()
+                                    .isNotEmpty) {
                               String newId =
                                   (_guardianService.guardians.length + 1)
                                       .toString();
@@ -491,7 +493,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 id: newId,
                                 name: _contactNameController.text.trim(),
                                 phone: _contactPhoneController.text.trim(),
-                                relation: _contactRelationController.text.trim(),
+                                relation: _contactRelationController.text
+                                    .trim(),
                               );
 
                               setState(() {
@@ -999,7 +1002,6 @@ class ProfileHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(10),
@@ -1145,7 +1147,6 @@ class ProfileHeader extends StatelessWidget {
                     // Edit button
                     GestureDetector(
                       onTap: () {
-                        print('Edit button tapped!');
                         onEditTap();
                       },
                       child: Container(

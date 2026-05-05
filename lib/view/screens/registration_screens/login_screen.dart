@@ -61,12 +61,16 @@ class _LoginScreenState extends State<LoginScreen> {
                             children: [
                               Text(
                                 'Welcome Back',
-                                style: AppTextStyle.bold(color: AppColor.appSecondary),
+                                style: AppTextStyle.bold(
+                                  color: AppColor.appSecondary,
+                                ),
                               ),
                               SizedBox(height: 6.h),
                               Text(
                                 'Login to your account',
-                                style: AppTextStyle.semiBold(color: AppColor.appSecondary),
+                                style: AppTextStyle.semiBold(
+                                  color: AppColor.appSecondary,
+                                ),
                               ),
                             ],
                           ),
@@ -78,7 +82,8 @@ class _LoginScreenState extends State<LoginScreen> {
                             validator: (value) {
                               final input = value?.trim() ?? '';
                               if (input.isEmpty) return "Email is required";
-                              if (!input.contains('@')) return "Enter a valid email";
+                              if (!input.contains('@'))
+                                return "Enter a valid email";
                               return null;
                             },
                           ),
@@ -90,7 +95,8 @@ class _LoginScreenState extends State<LoginScreen> {
                             validator: (value) {
                               final input = value ?? '';
                               if (input.isEmpty) return "Password is required";
-                              if (input.length < 6) return "Password must be at least 6 characters";
+                              if (input.length < 6)
+                                return "Password must be at least 6 characters";
                               return null;
                             },
                           ),
@@ -100,7 +106,9 @@ class _LoginScreenState extends State<LoginScreen> {
                               onPressed: () {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
-                                    content: Text("Forgot password flow will be added with backend auth."),
+                                    content: Text(
+                                      "Forgot password flow will be added with backend auth.",
+                                    ),
                                   ),
                                 );
                               },
@@ -122,16 +130,25 @@ class _LoginScreenState extends State<LoginScreen> {
                               }
                               Navigator.push(
                                 context,
-                                MaterialPageRoute(builder: (context) => const DashBoardScreen()),
+                                MaterialPageRoute(
+                                  builder: (context) => const DashBoardScreen(),
+                                ),
                               );
                             },
                           ),
                           if (!compact)
                             Row(
                               children: [
-                                Expanded(child: Divider(color: Colors.grey[500], thickness: 1.5)),
+                                Expanded(
+                                  child: Divider(
+                                    color: Colors.grey[500],
+                                    thickness: 1.5,
+                                  ),
+                                ),
                                 Padding(
-                                  padding: EdgeInsets.symmetric(horizontal: 10.w),
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 10.w,
+                                  ),
                                   child: Text(
                                     "or continue with",
                                     style: AppTextStyle.medium(
@@ -139,14 +156,21 @@ class _LoginScreenState extends State<LoginScreen> {
                                     ),
                                   ),
                                 ),
-                                Expanded(child: Divider(color: Colors.grey[500], thickness: 1.5)),
+                                Expanded(
+                                  child: Divider(
+                                    color: Colors.grey[500],
+                                    thickness: 1.5,
+                                  ),
+                                ),
                               ],
                             ),
                           ElevatedButton.icon(
                             onPressed: () {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
-                                  content: Text("Google sign-in will be available after backend integration."),
+                                  content: Text(
+                                    "Google sign-in will be available after backend integration.",
+                                  ),
                                 ),
                               );
                             },
@@ -164,28 +188,40 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                             label: Text(
                               "Google",
-                              style: AppTextStyle.regular(
-                                color: colorScheme.onSurface,
-                              ).copyWith(
-                                fontWeight: FontWeight.w600,
-                                fontSize: 14.sp,
-                              ),
+                              style:
+                                  AppTextStyle.regular(
+                                    color: colorScheme.onSurface,
+                                  ).copyWith(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 14.sp,
+                                  ),
                             ),
-                            style: ElevatedButton.styleFrom(
-                              elevation: 4,
-                              shadowColor: Colors.grey.withOpacity(0.3),
-                              backgroundColor: colorScheme.surfaceContainerLowest,
-                              surfaceTintColor: colorScheme.surfaceContainerLowest,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(35.r),
-                                side: const BorderSide(color: Color(0xFFE0E0E0), width: 1),
-                              ),
-                              padding: EdgeInsets.symmetric(vertical: 10.h, horizontal: 14.w),
-                            ).copyWith(
-                              overlayColor: WidgetStatePropertyAll(
-                                Colors.grey.withValues(alpha: 0.1),
-                              ),
-                            ),
+                            style:
+                                ElevatedButton.styleFrom(
+                                  elevation: 4,
+                                  shadowColor: Colors.grey.withValues(
+                                    alpha: 0.3,
+                                  ),
+                                  backgroundColor:
+                                      colorScheme.surfaceContainerLowest,
+                                  surfaceTintColor:
+                                      colorScheme.surfaceContainerLowest,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(35.r),
+                                    side: const BorderSide(
+                                      color: Color(0xFFE0E0E0),
+                                      width: 1,
+                                    ),
+                                  ),
+                                  padding: EdgeInsets.symmetric(
+                                    vertical: 10.h,
+                                    horizontal: 14.w,
+                                  ),
+                                ).copyWith(
+                                  overlayColor: WidgetStatePropertyAll(
+                                    Colors.grey.withValues(alpha: 0.1),
+                                  ),
+                                ),
                           ),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
@@ -200,7 +236,10 @@ class _LoginScreenState extends State<LoginScreen> {
                                 onPressed: () {
                                   Navigator.push(
                                     context,
-                                    MaterialPageRoute(builder: (context) => const SignupScreen()),
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          const SignupScreen(),
+                                    ),
                                   );
                                 },
                                 child: Text(

@@ -29,7 +29,10 @@ class _AIRecommendationScreenState extends State<AIRecommendationScreen> {
 
             // Toggle buttons (Guardian & Routes)
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 24.0,
+                vertical: 16,
+              ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -46,10 +49,13 @@ class _AIRecommendationScreenState extends State<AIRecommendationScreen> {
                               : colorScheme.surfaceContainerHighest,
                           gradient: selectedIndex == 0
                               ? LinearGradient(
-                            colors: [AppColor.appPrimary, AppColor.appSecondary],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          )
+                                  colors: [
+                                    AppColor.appPrimary,
+                                    AppColor.appSecondary,
+                                  ],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                )
                               : null,
                           borderRadius: BorderRadius.circular(14),
                           border: Border.all(
@@ -60,10 +66,10 @@ class _AIRecommendationScreenState extends State<AIRecommendationScreen> {
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.05),
+                              color: Colors.black.withValues(alpha: 0.05),
                               blurRadius: 6,
                               offset: const Offset(2, 3),
-                            )
+                            ),
                           ],
                         ),
                         child: Row(
@@ -105,10 +111,13 @@ class _AIRecommendationScreenState extends State<AIRecommendationScreen> {
                               : colorScheme.surfaceContainerHighest,
                           gradient: selectedIndex == 1
                               ? LinearGradient(
-                            colors: [AppColor.appPrimary, AppColor.appSecondary],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          )
+                                  colors: [
+                                    AppColor.appPrimary,
+                                    AppColor.appSecondary,
+                                  ],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                )
                               : null,
                           borderRadius: BorderRadius.circular(14),
                           border: Border.all(
@@ -119,10 +128,10 @@ class _AIRecommendationScreenState extends State<AIRecommendationScreen> {
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.05),
+                              color: Colors.black.withValues(alpha: 0.05),
                               blurRadius: 6,
                               offset: const Offset(2, 3),
-                            )
+                            ),
                           ],
                         ),
                         child: Row(
@@ -167,7 +176,6 @@ class _AIRecommendationScreenState extends State<AIRecommendationScreen> {
   }
 }
 
-
 //App bar to be added below the main app bar
 
 class AiAppBar extends StatelessWidget implements PreferredSizeWidget {
@@ -184,7 +192,6 @@ class AiAppBar extends StatelessWidget implements PreferredSizeWidget {
       backgroundColor: colorScheme.surfaceContainerLowest,
       elevation: 1,
       automaticallyImplyLeading: false, // remove default back icon
-
       // 🔥 Title Section → Icon + Title + Subtitle
       title: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -196,10 +203,7 @@ class AiAppBar extends StatelessWidget implements PreferredSizeWidget {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               gradient: LinearGradient(
-                colors: [
-                  AppColor.appPrimary,
-                  AppColor.appSecondary,
-                ],
+                colors: [AppColor.appPrimary, AppColor.appSecondary],
               ),
             ),
             child: const Icon(
@@ -239,4 +243,3 @@ class AiAppBar extends StatelessWidget implements PreferredSizeWidget {
     );
   }
 }
-

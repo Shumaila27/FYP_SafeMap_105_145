@@ -160,9 +160,6 @@ class _AboutScreenState extends State<AboutScreen> {
     required IconData icon,
     required VoidCallback onTap,
   }) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -233,7 +230,6 @@ class _AboutScreenState extends State<AboutScreen> {
     required IconData icon,
   }) {
     final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(

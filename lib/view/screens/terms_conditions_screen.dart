@@ -187,9 +187,6 @@ class TermsConditionsScreen extends StatelessWidget {
   }
 
   Widget _buildSection(BuildContext context, String title, String content) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
       padding: const EdgeInsets.all(16),

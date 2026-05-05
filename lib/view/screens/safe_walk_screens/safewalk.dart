@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import '../../../Models/guardian_model.dart';
 import '../../../services/guardian_service.dart';
 import '../../../utils/app_colors.dart';
 import '../../widgets/app_bar.dart';
@@ -148,10 +147,10 @@ class _SafeWalkScreenState extends State<SafeWalkScreen> {
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: Theme.of(context).brightness == Brightness.dark
-                    ? Colors.green.withOpacity(0.1)
-                    : Colors.green.withOpacity(0.05),
+                    ? Colors.green.withValues(alpha: 0.1)
+                    : Colors.green.withValues(alpha: 0.05),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.green.withOpacity(0.3)),
+                border: Border.all(color: Colors.green.withValues(alpha: 0.3)),
               ),
               child: Row(
                 children: [

@@ -345,7 +345,7 @@ class _RoutesScreenState extends State<RoutesScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: outlined ? color.withOpacity(0.1) : color,
+        color: outlined ? color.withValues(alpha: 0.1) : color,
         borderRadius: BorderRadius.circular(12),
         border: outlined ? Border.all(color: color) : null,
       ),

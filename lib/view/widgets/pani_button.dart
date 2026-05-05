@@ -11,7 +11,6 @@ class PanicButton extends StatefulWidget {
 
 class _PanicButtonState extends State<PanicButton>
     with SingleTickerProviderStateMixin {
-
   bool isPanicActive = false;
   bool showConfirm = false;
 
@@ -37,11 +36,6 @@ class _PanicButtonState extends State<PanicButton>
 
   void activatePanic() {
     setState(() => isPanicActive = true);
-
-    print("PANIC MODE ACTIVATED");
-    print("- Sending location to emergency contacts");
-    print("- Recording audio");
-    print("- Alerting nearby SafeMap users");
 
     // Auto turn off after 30 seconds
     Timer(const Duration(seconds: 30), () {
@@ -69,12 +63,7 @@ class _PanicButtonState extends State<PanicButton>
           AnimatedBuilder(
             animation: _pulseController,
             builder: (_, child) {
-              return Opacity(
-                opacity: 0.2,
-                child: Container(
-                  color: Colors.red,
-                ),
-              );
+              return Opacity(opacity: 0.2, child: Container(color: Colors.red));
             },
           ),
 
@@ -93,14 +82,16 @@ class _PanicButtonState extends State<PanicButton>
                     height: 70,
                     width: 70,
                     decoration: BoxDecoration(
-                      color: isPanicActive ? Colors.red.shade600 : Colors.red.shade500,
+                      color: isPanicActive
+                          ? Colors.red.shade600
+                          : Colors.red.shade500,
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.red.withOpacity(0.4),
+                          color: Colors.red.withValues(alpha: 0.4),
                           blurRadius: 15,
                           spreadRadius: 3,
-                        )
+                        ),
                       ],
                     ),
                     child: const Icon(
@@ -132,8 +123,10 @@ class _PanicButtonState extends State<PanicButton>
                   children: [
                     const Text(
                       "Activate Panic Mode?",
-                      style:
-                      TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     const SizedBox(height: 10),
                     const Text(
@@ -145,7 +138,10 @@ class _PanicButtonState extends State<PanicButton>
 
                     // list items
                     _infoItem(Icons.location_pin, "Send your live location"),
-                    _infoItem(Icons.phone_in_talk, "Alert nearby SafeMap users"),
+                    _infoItem(
+                      Icons.phone_in_talk,
+                      "Alert nearby SafeMap users",
+                    ),
                     _infoItem(Icons.mic, "Start recording audio evidence"),
 
                     const SizedBox(height: 15),
@@ -180,8 +176,7 @@ class _PanicButtonState extends State<PanicButton>
                     const SizedBox(height: 10),
                     const Text(
                       "For immediate police assistance, call 15",
-                      style:
-                      TextStyle(fontSize: 12, color: Colors.grey),
+                      style: TextStyle(fontSize: 12, color: Colors.grey),
                     ),
                   ],
                 ),
@@ -198,9 +193,7 @@ class _PanicButtonState extends State<PanicButton>
       children: [
         Icon(icon, size: 20, color: Colors.red),
         const SizedBox(width: 8),
-        Expanded(
-          child: Text(text, style: const TextStyle(fontSize: 14)),
-        )
+        Expanded(child: Text(text, style: const TextStyle(fontSize: 14))),
       ],
     );
   }

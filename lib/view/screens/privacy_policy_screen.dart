@@ -79,7 +79,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
                                 color: Color(0xFF111827),
                               ),
                             ),
-                            const SizedBox(height: 4),
+                            SizedBox(height: 4),
                             Text(
                               'How SafeMap Protects Your Data',
                               style: TextStyle(

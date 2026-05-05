@@ -11,7 +11,6 @@ class HelpSupportScreen extends StatefulWidget {
 
 class _HelpSupportScreenState extends State<HelpSupportScreen> {
   BoxDecoration _sectionDecoration(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     return BoxDecoration(
       color: AppColor.getContainerBackground(context),
       borderRadius: BorderRadius.circular(14),
@@ -769,12 +768,14 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
     if (await canLaunchUrl(emailUri)) {
       await launchUrl(emailUri);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Could not open email app'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Could not open email app'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -784,12 +785,14 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
     if (await canLaunchUrl(phoneUri)) {
       await launchUrl(phoneUri);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Could not open phone dialer'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Could not open phone app'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -807,12 +810,14 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
     if (await canLaunchUrl(whatsappUri)) {
       await launchUrl(whatsappUri, mode: LaunchMode.externalApplication);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Could not open WhatsApp'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Could not open WhatsApp'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
