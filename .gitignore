@@ -46,3 +46,8 @@ app.*.map.json
 
 #supasebase keys
 .env
+
+
+#agent files
+.agents/
+skills-lock.json
