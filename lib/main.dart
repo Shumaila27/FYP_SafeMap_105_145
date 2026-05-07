@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'; // <-- import this
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 import 'package:staysafe/view/screens/registration_screens/splash_screen.dart';
@@ -7,15 +9,20 @@ import 'Controller/chat_controller.dart';
 import 'Controller/report_controller.dart';
 import 'Controller/theme_controller.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-
+  //Loading of .env file
+  await dotenv.load(fileName:".env");
+  await Supabase.initialize(
+    url: dotenv.env['SUPABASE_URL']!,
+    anonKey: dotenv.env['SUPABASE_ANON_KEY']!
+  );
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => ReportController()),
-        ChangeNotifierProvider(create: (_) => ChatController()), // <-- added
+        ChangeNotifierProvider(create: (_) => ChatController()),
         ChangeNotifierProvider(create: (_) => ThemeController()),
       ],
       child: const MyApp(),
@@ -46,7 +53,10 @@ class MyApp extends StatelessWidget {
                 ),
                 scaffoldBackgroundColor: const Color(0xFFF8FAFC),
                 cardColor: Colors.white,
-                appBarTheme: const AppBarTheme(centerTitle: false, elevation: 1),
+                appBarTheme: const AppBarTheme(
+                  centerTitle: false,
+                  elevation: 1,
+                ),
                 switchTheme: SwitchThemeData(
                   thumbColor: WidgetStateProperty.resolveWith((states) {
                     if (states.contains(WidgetState.selected)) {
@@ -70,7 +80,10 @@ class MyApp extends StatelessWidget {
                 ),
                 scaffoldBackgroundColor: const Color(0xFF0B1220),
                 cardColor: const Color(0xFF111827),
-                appBarTheme: const AppBarTheme(centerTitle: false, elevation: 1),
+                appBarTheme: const AppBarTheme(
+                  centerTitle: false,
+                  elevation: 1,
+                ),
                 switchTheme: SwitchThemeData(
                   thumbColor: WidgetStateProperty.resolveWith((states) {
                     if (states.contains(WidgetState.selected)) {
