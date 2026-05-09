@@ -1,12 +1,17 @@
+// lib/view/screens/registrat.../login_screen.dart
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:provider/provider.dart';
 import 'package:staysafe/view/screens/dashboard.dart';
 import 'signup_screen.dart';
 import '../../../utils/app_colors.dart';
 import '../../../utils/text_style.dart';
-import '../../widgets/buttons.dart'; // ✅ For your customizable button
+import '../../widgets/buttons.dart';
 import '../../widgets/header.dart';
 import '../../widgets/text_fields.dart';
+import '../../../Controller/auth_provider.dart';
+import '../../../Models/auth_model.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -34,15 +39,48 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+  // ── Login Handler ─────────────────────────────────────
+  Future<void> _handleLogin() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    final authProvider = context.read<AuthProvider>();
+
+    final authModel = AuthModel(
+      email: emailController.text.trim(),
+      password: passwordController.text,
+    );
+
+    final success = await authProvider.login(authModel);
+
+    if (!mounted) return;
+
+    if (success) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const DashBoardScreen()),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(authProvider.errorMessage ?? 'Login failed'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      authProvider.reset();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+
     return Scaffold(
       backgroundColor: colorScheme.surface,
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
             final bool compact = constraints.maxHeight < 760;
+
             return Form(
               key: _formKey,
               child: Column(
@@ -57,6 +95,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
+                          // ── Title ──────────────────────────────────
                           Column(
                             children: [
                               Text(
@@ -74,6 +113,8 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                             ],
                           ),
+
+                          // ── Email Field ────────────────────────────
                           CustomTextField(
                             hintText: "Email",
                             icon: Icons.email_outlined,
@@ -81,12 +122,15 @@ class _LoginScreenState extends State<LoginScreen> {
                             keyboardType: TextInputType.emailAddress,
                             validator: (value) {
                               final input = value?.trim() ?? '';
-                              if (input.isEmpty) return "Email is required";
-                              if (!input.contains('@'))
-                                return "Enter a valid email";
-                              return null;
+                              final emailError = AuthModel(
+                                email: input,
+                                password: '',
+                              ).validateEmail();
+                              return emailError;
                             },
                           ),
+
+                          // ── Password Field ─────────────────────────
                           CustomTextField(
                             hintText: "Password",
                             icon: Icons.lock_outline,
@@ -94,12 +138,15 @@ class _LoginScreenState extends State<LoginScreen> {
                             isPassword: true,
                             validator: (value) {
                               final input = value ?? '';
-                              if (input.isEmpty) return "Password is required";
-                              if (input.length < 6)
-                                return "Password must be at least 6 characters";
-                              return null;
+                              final passwordError = AuthModel(
+                                email: '',
+                                password: input,
+                              ).validatePassword();
+                              return passwordError;
                             },
                           ),
+
+                          // ── Forgot Password ────────────────────────
                           Align(
                             alignment: Alignment.centerRight,
                             child: TextButton(
@@ -120,22 +167,22 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                             ),
                           ),
-                          CustomButton(
-                            text: "Login",
-                            buttonColor: AppColor.appSecondary,
-                            textColor: Colors.white,
-                            onPressed: () {
-                              if (!_formKey.currentState!.validate()) {
-                                return;
-                              }
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const DashBoardScreen(),
-                                ),
-                              );
+
+                          // ── Login Button (with loading state) ──────
+                          Consumer<AuthProvider>(
+                            builder: (context, auth, _) {
+                              return auth.isLoading
+                                  ? const CircularProgressIndicator()
+                                  : CustomButton(
+                                      text: "Login",
+                                      buttonColor: AppColor.appSecondary,
+                                      textColor: Colors.white,
+                                      onPressed: _handleLogin,
+                                    );
                             },
                           ),
+
+                          // ── Divider (hidden on compact screens) ────
                           if (!compact)
                             Row(
                               children: [
@@ -164,6 +211,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                               ],
                             ),
+
+                          // ── Google Button ──────────────────────────
                           ElevatedButton.icon(
                             onPressed: () {
                               ScaffoldMessenger.of(context).showSnackBar(
@@ -223,6 +272,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ),
                                 ),
                           ),
+
+                          // ── Register Row ───────────────────────────
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
@@ -237,8 +288,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (context) =>
-                                          const SignupScreen(),
+                                      builder: (_) => const SignupScreen(),
                                     ),
                                   );
                                 },

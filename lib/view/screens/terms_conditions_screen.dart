@@ -79,7 +79,7 @@ class TermsConditionsScreen extends StatelessWidget {
                                 color: Color(0xFF111827),
                               ),
                             ),
-                            const SizedBox(height: 4),
+                            SizedBox(height: 4),
                             Text(
                               'SafeMap Terms of Service',
                               style: TextStyle(

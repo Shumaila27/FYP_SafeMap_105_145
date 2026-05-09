@@ -1,11 +1,16 @@
+// lib/view/screens/registrat.../signup_screen.dart
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:provider/provider.dart';
 import 'package:staysafe/view/screens/registration_screens/login_screen.dart';
 import '../../../utils/app_colors.dart';
 import '../../../utils/text_style.dart';
 import '../../widgets/buttons.dart';
 import '../../widgets/header.dart';
 import '../../widgets/text_fields.dart';
+import '../../../Controller/auth_provider.dart';
+import '../../../Models/auth_model.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -42,9 +47,53 @@ class _SignupScreenState extends State<SignupScreen> {
     super.dispose();
   }
 
+  // ── Signup Handler ────────────────────────────────────
+  Future<void> _handleSignup() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    final authProvider = context.read<AuthProvider>();
+
+    final signupModel = SignupModel(
+      fullName: nameController.text.trim(),
+      email: emailController.text.trim(),
+      password: passwordController.text,
+      phone: phoneController.text.trim(),
+    );
+
+    final success = await authProvider.signup(signupModel);
+
+    if (!mounted) return;
+
+    if (success) {
+      // Show success message then go to login
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Account created! Please check your email to verify your account.',
+          ),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 3),
+        ),
+      );
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(authProvider.errorMessage ?? 'Signup failed'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      authProvider.reset();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+
     return Scaffold(
       backgroundColor: colorScheme.surface,
       body: SafeArea(
@@ -52,6 +101,7 @@ class _SignupScreenState extends State<SignupScreen> {
           builder: (context, constraints) {
             final bool compact = constraints.maxHeight < 840;
             final double vGap = compact ? 10.h : 14.h;
+
             return Form(
               key: _formKey,
               child: Column(
@@ -66,30 +116,45 @@ class _SignupScreenState extends State<SignupScreen> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
+                          // ── Title ──────────────────────────────────
                           Column(
                             children: [
                               Text(
                                 'Create Account',
-                                style: AppTextStyle.bold(color: AppColor.appSecondary),
+                                style: AppTextStyle.bold(
+                                  color: AppColor.appSecondary,
+                                ),
                               ),
                               SizedBox(height: 4.h),
                               Text(
                                 'Sign up to get started',
-                                style: AppTextStyle.semiBold(color: AppColor.appSecondary),
+                                style: AppTextStyle.semiBold(
+                                  color: AppColor.appSecondary,
+                                ),
                               ),
                             ],
                           ),
+
+                          // ── Full Name Field ────────────────────────
                           CustomTextField(
                             hintText: "Full Name",
                             icon: Icons.person_outline,
                             controller: nameController,
                             keyboardType: TextInputType.name,
                             validator: (value) {
-                              if ((value ?? '').trim().isEmpty) return "Name is required";
-                              return null;
+                              final input = value ?? '';
+                              final nameError = SignupModel(
+                                fullName: input,
+                                email: '',
+                                password: '',
+                                phone: '',
+                              ).validateFullName();
+                              return nameError;
                             },
                           ),
                           SizedBox(height: vGap),
+
+                          // ── Email Field ────────────────────────────
                           CustomTextField(
                             hintText: "Email",
                             icon: Icons.email_outlined,
@@ -97,23 +162,37 @@ class _SignupScreenState extends State<SignupScreen> {
                             keyboardType: TextInputType.emailAddress,
                             validator: (value) {
                               final input = value?.trim() ?? '';
-                              if (input.isEmpty) return "Email is required";
-                              if (!input.contains('@')) return "Enter a valid email";
-                              return null;
+                              final emailError = SignupModel(
+                                fullName: '',
+                                email: input,
+                                password: '',
+                                phone: '',
+                              ).validateEmail();
+                              return emailError;
                             },
                           ),
                           SizedBox(height: vGap),
+
+                          // ── Phone Field ────────────────────────────
                           CustomTextField(
                             hintText: "Phone Number",
                             icon: Icons.phone_outlined,
                             controller: phoneController,
                             keyboardType: TextInputType.phone,
                             validator: (value) {
-                              if ((value ?? '').trim().isEmpty) return "Phone number is required";
-                              return null;
+                              final input = value ?? '';
+                              final phoneError = SignupModel(
+                                fullName: '',
+                                email: '',
+                                password: '',
+                                phone: input,
+                              ).validatePhone();
+                              return phoneError;
                             },
                           ),
                           SizedBox(height: vGap),
+
+                          // ── Password Field ─────────────────────────
                           CustomTextField(
                             hintText: "Password",
                             icon: Icons.lock_outline,
@@ -121,48 +200,62 @@ class _SignupScreenState extends State<SignupScreen> {
                             isPassword: true,
                             validator: (value) {
                               final input = value ?? '';
-                              if (input.isEmpty) return "Password is required";
-                              if (input.length < 6) return "Password must be at least 6 characters";
-                              return null;
+                              final passwordError = SignupModel(
+                                fullName: '',
+                                email: '',
+                                password: input,
+                                phone: '',
+                              ).validatePassword();
+                              return passwordError;
                             },
                           ),
                           SizedBox(height: vGap),
+
+                          // ── Confirm Password Field ─────────────────
                           CustomTextField(
                             hintText: "Confirm Password",
                             icon: Icons.lock_outline,
                             controller: confirmPasswordController,
                             isPassword: true,
                             validator: (value) {
-                              if ((value ?? '').isEmpty) return "Please confirm password";
-                              if (value != passwordController.text) return "Passwords do not match";
+                              if ((value ?? '').isEmpty) {
+                                return "Please confirm password";
+                              }
+                              if (value != passwordController.text) {
+                                return "Passwords do not match";
+                              }
                               return null;
                             },
                           ),
-                          CustomButton(
-                            text: "Sign Up",
-                            buttonColor: AppColor.appSecondary,
-                            textColor: Colors.white,
-                            onPressed: () {
-                              if (!_formKey.currentState!.validate()) {
-                                return;
-                              }
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text("Signup frontend validated. Backend signup will be added next."),
-                                ),
-                              );
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(builder: (context) => const LoginScreen()),
-                              );
+
+                          // ── Signup Button (with loading state) ─────
+                          Consumer<AuthProvider>(
+                            builder: (context, auth, _) {
+                              return auth.isLoading
+                                  ? const CircularProgressIndicator()
+                                  : CustomButton(
+                                      text: "Sign Up",
+                                      buttonColor: AppColor.appSecondary,
+                                      textColor: Colors.white,
+                                      onPressed: _handleSignup,
+                                    );
                             },
                           ),
+
+                          // ── Divider (hidden on compact screens) ────
                           if (!compact)
                             Row(
                               children: [
-                                Expanded(child: Divider(color: Colors.grey[500], thickness: 1.5)),
+                                Expanded(
+                                  child: Divider(
+                                    color: Colors.grey[500],
+                                    thickness: 1.5,
+                                  ),
+                                ),
                                 Padding(
-                                  padding: EdgeInsets.symmetric(horizontal: 10.w),
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 10.w,
+                                  ),
                                   child: Text(
                                     "or continue with",
                                     style: AppTextStyle.medium(
@@ -170,14 +263,23 @@ class _SignupScreenState extends State<SignupScreen> {
                                     ),
                                   ),
                                 ),
-                                Expanded(child: Divider(color: Colors.grey[500], thickness: 1.5)),
+                                Expanded(
+                                  child: Divider(
+                                    color: Colors.grey[500],
+                                    thickness: 1.5,
+                                  ),
+                                ),
                               ],
                             ),
+
+                          // ── Google Button ──────────────────────────
                           ElevatedButton.icon(
                             onPressed: () {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
-                                  content: Text("Google sign-up will be available after backend integration."),
+                                  content: Text(
+                                    "Google sign-up will be available after backend integration.",
+                                  ),
                                 ),
                               );
                             },
@@ -195,29 +297,43 @@ class _SignupScreenState extends State<SignupScreen> {
                             ),
                             label: Text(
                               "Google",
-                              style: AppTextStyle.regular(
-                                color: colorScheme.onSurface,
-                              ).copyWith(
-                                fontWeight: FontWeight.w600,
-                                fontSize: 14.sp,
-                              ),
+                              style:
+                                  AppTextStyle.regular(
+                                    color: colorScheme.onSurface,
+                                  ).copyWith(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 14.sp,
+                                  ),
                             ),
-                            style: ElevatedButton.styleFrom(
-                              elevation: 4,
-                              shadowColor: Colors.grey.withValues(alpha: 0.3),
-                              backgroundColor: colorScheme.surfaceContainerLowest,
-                              surfaceTintColor: colorScheme.surfaceContainerLowest,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(35.r),
-                                side: const BorderSide(color: Color(0xFFE0E0E0), width: 1),
-                              ),
-                              padding: EdgeInsets.symmetric(vertical: 10.h, horizontal: 14.w),
-                            ).copyWith(
-                              overlayColor: WidgetStatePropertyAll(
-                                Colors.grey.withValues(alpha: 0.1),
-                              ),
-                            ),
+                            style:
+                                ElevatedButton.styleFrom(
+                                  elevation: 4,
+                                  shadowColor: Colors.grey.withValues(
+                                    alpha: 0.3,
+                                  ),
+                                  backgroundColor:
+                                      colorScheme.surfaceContainerLowest,
+                                  surfaceTintColor:
+                                      colorScheme.surfaceContainerLowest,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(35.r),
+                                    side: const BorderSide(
+                                      color: Color(0xFFE0E0E0),
+                                      width: 1,
+                                    ),
+                                  ),
+                                  padding: EdgeInsets.symmetric(
+                                    vertical: 10.h,
+                                    horizontal: 14.w,
+                                  ),
+                                ).copyWith(
+                                  overlayColor: WidgetStatePropertyAll(
+                                    Colors.grey.withValues(alpha: 0.1),
+                                  ),
+                                ),
                           ),
+
+                          // ── Login Row ──────────────────────────────
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
@@ -231,7 +347,9 @@ class _SignupScreenState extends State<SignupScreen> {
                                 onPressed: () {
                                   Navigator.push(
                                     context,
-                                    MaterialPageRoute(builder: (context) => const LoginScreen()),
+                                    MaterialPageRoute(
+                                      builder: (_) => const LoginScreen(),
+                                    ),
                                   );
                                 },
                                 child: Text(
