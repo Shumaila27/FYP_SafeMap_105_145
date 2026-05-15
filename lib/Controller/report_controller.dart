@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
+import '../services/report_service.dart';
 
 
 class ReportController extends ChangeNotifier {
-  /// Incident Type (default = harassment)
-  String incidentType = "harassment";
+  /// Incident Type
+  String? categoryId;
 
   /// Severity Level (default = medium)
   String severity = "medium";
@@ -35,8 +36,8 @@ class ReportController extends ChangeNotifier {
 
   // ---------------- Incident Controls ----------------
 
-  void setIncidentType(String value) {
-    incidentType = value;
+  void setCategory(String value) {
+    categoryId = value;
     notifyListeners();
   }
 
@@ -48,10 +49,7 @@ class ReportController extends ChangeNotifier {
   // ---------------- Location Handling ----------------
 
   /// Called when user selects location from map popup
-  void setSelectedLocation({
-    required LatLng latLng,
-    required String address,
-  }) {
+  void setSelectedLocation({required LatLng latLng, required String address}) {
     selectedLatLng = latLng;
     locationController.text = address;
     notifyListeners();
@@ -78,14 +76,27 @@ class ReportController extends ChangeNotifier {
 
   // ---------------- Submit Handling ----------------
 
+  Future<void> handleSubmit() async {
+    try {
+      isSubmitted = true;
+      notifyListeners();
 
-  void handleSubmit() {
-    isSubmitted = true;
-    notifyListeners();
+      final reportService = ReportService();
 
-    Future.delayed(const Duration(seconds: 3), () {
+      final report = await reportService.submitReport(
+          categoryId: categoryId!,
+        severity: severity,
+        description: descriptionController.text,
+        locationAddress: locationController.text,
+        latitude: selectedLatLng?.latitude,
+        longitude: selectedLatLng?.longitude,
+        incidentDate: DateTime.now(),
+        imageFile: selectedImage,
+        isAnonymous: true,
+      );
+
+      // Reset form after successful submission
       isSubmitted = false;
-
       descriptionController.clear();
       locationController.clear();
       timeController.clear();
@@ -94,7 +105,10 @@ class ReportController extends ChangeNotifier {
       selectedLatLng = null;
 
       notifyListeners();
-    });
+    } catch (e) {
+      isSubmitted = false;
+      notifyListeners();
+    }
   }
 
   void resetSubmission() {

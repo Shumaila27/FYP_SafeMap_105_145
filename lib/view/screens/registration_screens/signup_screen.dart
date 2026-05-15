@@ -1,8 +1,7 @@
-// lib/view/screens/registrat.../signup_screen.dart
-
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
+import 'package:staysafe/view/screens/dashboard.dart';
 import 'package:staysafe/view/screens/registration_screens/login_screen.dart';
 import '../../../utils/app_colors.dart';
 import '../../../utils/text_style.dart';
@@ -65,19 +64,19 @@ class _SignupScreenState extends State<SignupScreen> {
     if (!mounted) return;
 
     if (success) {
-      // Show success message then go to login
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text(
-            'Account created! Please check your email to verify your account.',
-          ),
+          content: Text('Account created successfully! Welcome to SafeWalk!'),
           backgroundColor: Colors.green,
           duration: Duration(seconds: 3),
         ),
       );
-      Navigator.pushReplacement(
+
+      // Navigate directly to Dashboard since email confirmation is disabled
+      Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(builder: (_) => const LoginScreen()),
+        MaterialPageRoute(builder: (_) => const DashBoardScreen()),
+        (route) => false,
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(

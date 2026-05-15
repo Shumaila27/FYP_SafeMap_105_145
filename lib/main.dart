@@ -4,7 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
-import 'package:staysafe/view/screens/registration_screens/splash_screen.dart';
+import 'package:staysafe/view/screens/auth_checker_screen.dart';
 import 'Controller/chat_controller.dart';
 import 'Controller/auth_provider.dart';
 import 'Controller/theme_controller.dart';
@@ -106,7 +106,7 @@ class MyApp extends StatelessWidget {
           },
         );
       },
-      child: const SplashScreen(),
+      child: const AuthCheckerScreen(),
     );
   }
 }

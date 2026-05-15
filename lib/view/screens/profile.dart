@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../Models/guardian_model.dart';
 import '../../services/guardian_service.dart';
 import '../../utils/app_colors.dart';
@@ -10,6 +11,7 @@ import '../widgets/app_bar.dart';
 import 'help_support_new.dart';
 import 'settings_screen.dart';
 import 'about_screen.dart';
+import 'registration_screens/login_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -52,6 +54,45 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _nameController = TextEditingController(text: _userName);
     _emailController = TextEditingController(text: _userEmail);
     _guardianService.initializeGuardians();
+  }
+
+  // ── Logout Handler ───────────────────────────────────
+  Future<void> _handleLogout() async {
+    try {
+      // Show loading indicator
+      if (!mounted) return;
+
+      // Perform Supabase logout
+      await Supabase.instance.client.auth.signOut();
+
+      // Show success message
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Logged out successfully'),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 2),
+        ),
+      );
+
+      // Navigate to Login screen and clear all previous routes
+      if (!mounted) return;
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+        (route) => false,
+      );
+    } catch (e) {
+      // Handle logout errors
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Logout failed: ${e.toString()}'),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    }
   }
 
   @override
@@ -913,13 +954,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     const SizedBox(height: 18),
 
                     LogoutButtonSection(
-                      onLogout: () {
-                        // placeholder - user will implement navigation/logout
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Logged out (placeholder)'),
-                          ),
-                        );
+                      onLogout: () async {
+                        await _handleLogout();
                       },
                     ),
 

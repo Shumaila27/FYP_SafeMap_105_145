@@ -26,14 +26,33 @@ class AuthService {
   }
 
   // ── Email Verification ───────────────────────────────
-  Future<void> verifyEmail(String token) async {
-    await _client.auth.verifyOTP(token: token, type: OtpType.email);
+  Future<void> verifyEmail(String email, String token) async {
+    await _client.auth.verifyOTP(
+      email: email,
+      token: token,
+      type: OtpType.email,
+    );
   }
 
   Future<void> resendVerificationEmail() async {
     final user = _client.auth.currentUser;
     if (user != null && user.email != null) {
       await _client.auth.resend(type: OtpType.email, email: user.email!);
+    }
+  }
+
+  // ── Save User Data ───────────────────────────────
+  Future<void> saveUserData(SignupModel model, String userId) async {
+    try {
+      await _client.from('users').insert({
+        'id': userId,
+        'full_name': model.fullName,
+        'email': model.email,
+        'phone': model.phone,
+        'created_at': DateTime.now().toIso8601String(),
+      });
+    } catch (e) {
+      throw Exception('Failed to save user data: ${e.toString()}');
     }
   }
 
