@@ -1,79 +1,179 @@
-import 'dart:math';
-import 'package:flutter/material.dart';
+// lib/Controller/chat_controller.dart
 
+import 'dart:async';
+import 'dart:io';
+import 'package:flutter/material.dart';
 import '../Models/chat_message_model.dart';
+import '../services/chat_service.dart';
 
 class ChatController extends ChangeNotifier {
-  /// Input controller
+
+  final _svc = ChatService.instance;
+
+  final List<ChatMessage>     messages          = [];
   final TextEditingController messageController = TextEditingController();
 
-  /// Messages list
-  final List<ChatMessage> messages = [
-    ChatMessage(
-      sender: 'bot',
-      text:
-      "Hello! I'm your SafeMap AI Assistant 💜 I can help you report incidents quickly and safely. How can I assist you today?",
-      time: '07:30 PM',
-    ),
-  ];
+  bool    _isLoading      = false;
+  bool    _isInitializing = true;
+  String? _sessionId;
+  String? _error;
+  int     _todayCount     = 0;
 
-  /// Bot predefined responses
-  final Map<String, List<String>> botResponses = {
-    "Find safe route": [
-      "I can help you find the safest route! 🚗\nSwitch to the 'Safe Routes' tab to see AI-powered recommendations.",
-    ],
-    "Help": [
-      "I can help you:\n• Report incidents\n• Find safer routes\n• Activate Guardian Mode",
-    ],
-    "Report Incident": [
-      "Let's report an incident ⚠️\nWhat type of incident was it?",
-    ],
-  };
+  static const int _dailyLimit = 50;
 
-  /// Send message
-  void sendMessage(String text) {
-    final trimmed = text.trim();
-    if (trimmed.isEmpty) return;
+  bool    get isLoading      => _isLoading;
+  bool    get isInitializing => _isInitializing;
+  String? get error          => _error;
+  int     get todayCount     => _todayCount;
+  int     get dailyLimit     => _dailyLimit;
+  bool    get isAtLimit      => _todayCount >= _dailyLimit;
 
-    final now = TimeOfDay.now();
-    final time =
-        "${now.hourOfPeriod.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')} ${now.period == DayPeriod.am ? 'AM' : 'PM'}";
+  // ════════════════════════════════════════════════════════
+  //  INIT
+  // ════════════════════════════════════════════════════════
 
-    messages.add(
-      ChatMessage(sender: 'user', text: trimmed, time: time),
-    );
+  Future<void> init() async {
+    _isInitializing = true;
     notifyListeners();
 
-    Future.delayed(const Duration(milliseconds: 500), () {
-      messages.add(
-        ChatMessage(
-          sender: 'bot',
-          text: _generateBotResponse(trimmed),
-          time: time,
-        ),
-      );
-      notifyListeners();
-    });
+    try {
+      _sessionId  = await _svc.loadLatestSessionId();
+      _todayCount = await _svc.getTodayMessageCount();
 
-    messageController.clear();
+      if (_sessionId != null) {
+        final loaded = await _svc.loadMessages(_sessionId!);
+        messages.addAll(loaded);
+      }
+
+      // Show welcome only if no real history
+      if (messages.isEmpty) {
+        _addWelcomeMessage();
+      }
+
+    } catch (e) {
+      debugPrint('[ChatController] init error: $e');
+      _addWelcomeMessage();
+    } finally {
+      _isInitializing = false;
+      notifyListeners();
+    }
   }
 
-  /// Bot reply logic
-  String _generateBotResponse(String userText) {
-    final random = Random();
+  void _addWelcomeMessage() {
+    messages.add(ChatMessage.local(
+      role: 'assistant',
+      text: "Hi! I'm SafeGuard 🛡️\n\n"
+          "I'm your personal safety assistant for SafeMap. "
+          "I can help with safety tips, emergency guidance, "
+          "legal rights, and how to use SafeMap features.\n\n"
+          "How can I help you stay safe today?",
+    ));
+  }
 
-    if (botResponses.containsKey(userText)) {
-      final replies = botResponses[userText]!;
-      return replies[random.nextInt(replies.length)];
+  // ════════════════════════════════════════════════════════
+  //  SEND MESSAGE
+  // ════════════════════════════════════════════════════════
+
+  Future<void> sendMessage(String text) async {
+    final trimmed = text.trim();
+    if (trimmed.isEmpty || _isLoading) return;
+
+    if (isAtLimit) {
+      _showRateLimitMessage();
+      return;
     }
 
-    final generic = [
-      "I'm checking that for you... 🔍",
-      "Interesting! Let me gather that info.",
-      "Give me a moment...",
-    ];
+    messageController.clear();
 
-    return generic[random.nextInt(generic.length)];
+    // 1. Add user message to UI immediately
+    messages.add(ChatMessage.local(role: 'user', text: trimmed));
+    _isLoading = true;
+    _error     = null;
+    notifyListeners();
+
+    try {
+      // 2. Create session on first real message
+      _sessionId ??= await _svc.createSession(trimmed);
+
+      // ✅ Fix — only send REAL DB messages as history
+      // Exclude: local welcome message, the message we just added
+      final history = messages
+          .where((m) => !m.isLocal)  // only messages saved in DB
+          .toList();
+
+      // 3. Send to Gemini via edge function
+      final reply = await _svc.sendMessage(
+        sessionId:   _sessionId!,
+        userMessage: trimmed,
+        history:     history,
+      );
+
+      // 4. Add AI reply to UI
+      messages.add(ChatMessage.local(role: 'assistant', text: reply));
+      _todayCount++;
+
+    } on SocketException {
+      _handleError('No internet connection. Please check your network.');
+    } on TimeoutException {
+      _handleError('Request timed out. Please try again.');
+    } catch (e) {
+      final msg = e.toString().replaceAll('Exception: ', '');
+      debugPrint('[ChatController] sendMessage error: $e');
+      if (msg.contains('Daily limit')) {
+        _showRateLimitMessage();
+      } else {
+        _handleError('Something went wrong. Please try again.');
+      }
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  void _handleError(String message) {
+    _error = message;
+    messages.add(ChatMessage.local(
+      role: 'assistant',
+      text: '⚠️ $message',
+    ));
+  }
+
+  void _showRateLimitMessage() {
+    messages.add(ChatMessage.local(
+      role: 'assistant',
+      text: '⚠️ You have reached the daily limit of '
+          '$_dailyLimit messages. Please try again tomorrow.',
+    ));
+    notifyListeners();
+  }
+
+  // ════════════════════════════════════════════════════════
+  //  START NEW CHAT
+  // ════════════════════════════════════════════════════════
+
+  Future<void> startNewChat() async {
+    messages.clear();
+    _sessionId = null;
+    _isLoading = false;
+    _error     = null;
+    messageController.clear();
+    _addWelcomeMessage();
+    notifyListeners();
+  }
+
+  // ════════════════════════════════════════════════════════
+  //  RESET — on logout
+  // ════════════════════════════════════════════════════════
+
+  void reset() {
+    messages.clear();
+    _sessionId      = null;
+    _isLoading      = false;
+    _isInitializing = true;
+    _error          = null;
+    _todayCount     = 0;
+    messageController.clear();
+    notifyListeners();
   }
 
   @override

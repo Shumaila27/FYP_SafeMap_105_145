@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../screens/registration_screens/login_screen.dart';
 import '../screens/dashboard.dart';
+import '../../services/fcm_service.dart';
 
 class AuthCheckerScreen extends StatefulWidget {
   const AuthCheckerScreen({super.key});
@@ -28,6 +29,7 @@ class _AuthCheckerScreenState extends State<AuthCheckerScreen> {
 
     if (session != null) {
       // User is logged in, navigate to Dashboard
+      await FCMService.instance.saveTokenToSupabase();
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (_) => const DashBoardScreen()),

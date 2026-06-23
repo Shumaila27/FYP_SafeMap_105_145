@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "371248016526",
+    "project_id": "safemap-203ea",
+    "storage_bucket": "safemap-203ea.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:371248016526:android:db4c9d575308073d99addf",
+        "android_client_info": {
+          "package_name": "com.example.staysafe"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAg-4Pb3TdNe5SAnCVmjiJC5EfzFRO2EBA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -74,6 +74,10 @@ class CustomNavBar extends StatelessWidget {
     bool isSelected = currentIndex == index;
     return GestureDetector(
       onTap: () {
+        debugPrint('$label button clicked (index: $index)');
+        if (label == 'Profile') {
+          debugPrint('Navigating to Profile Screen');
+        }
         onTap(index);
       },
       child: Column(

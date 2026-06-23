@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:staysafe/view/screens/map_screen.dart';
-import 'package:staysafe/view/screens/profile.dart';
+import 'package:staysafe/view/screens/profile_screen.dart';
 import 'package:staysafe/view/screens/report_screen/report_screen.dart';
 import 'package:staysafe/view/screens/safe_walk_screens/safewalk.dart';
 import 'package:staysafe/view/widgets/nav_bar.dart';

@@ -1,3 +1,4 @@
+// lib/view/screens/report/report_screen.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:staysafe/view/widgets/app_bar.dart';
@@ -16,12 +17,12 @@ class ReportScreen extends StatelessWidget {
       builder: (context, controller, _) {
         final colorScheme = Theme.of(context).colorScheme;
         final isDark = Theme.of(context).brightness == Brightness.dark;
+
+        // ── Success Screen ───────────────────────────────────────────────────
         if (controller.isSubmitted) {
-          // Success Screen
           return Scaffold(
-            backgroundColor: isDark
-                ? const Color(0xFF0F1F1A)
-                : Colors.green[50],
+            backgroundColor:
+            isDark ? const Color(0xFF0F1F1A) : Colors.green[50],
             body: Center(
               child: Container(
                 padding: const EdgeInsets.all(24),
@@ -29,7 +30,8 @@ class ReportScreen extends StatelessWidget {
                   color: AppColor.getContainerBackground(context),
                   borderRadius: BorderRadius.circular(24),
                   border: Border.all(
-                    color: isDark ? Colors.green[800]! : Colors.green[200]!,
+                    color:
+                    isDark ? Colors.green[800]! : Colors.green[200]!,
                     width: 2,
                   ),
                   boxShadow: [
@@ -55,25 +57,23 @@ class ReportScreen extends StatelessWidget {
                         ),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(
-                        Icons.check,
-                        size: 40,
-                        color: Colors.white,
-                      ),
+                      child: const Icon(Icons.check,
+                          size: 40, color: Colors.white),
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      "Report Submitted!",
+                      'Report Submitted!',
                       style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
-                        color: isDark ? Colors.teal[300] : Colors.teal[700],
+                        color:
+                        isDark ? Colors.teal[300] : Colors.teal[700],
                       ),
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      "Thank you for contributing to community safety. "
-                      "Your anonymous report has been added to the map.",
+                      'Thank you for contributing to community safety. '
+                          'Your anonymous report has been added to the map.',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 14,
@@ -85,9 +85,10 @@ class ReportScreen extends StatelessWidget {
                       width: double.infinity,
                       height: 48,
                       child: CustomButton(
-                        text: "Report Another Incident",
+                        text: 'Report Another Incident',
                         textColor: Colors.white,
-                        buttonColor: AppColor.getInteractivePrimary(context),
+                        buttonColor:
+                        AppColor.getInteractivePrimary(context),
                         fontSize: 16,
                         onPressed: controller.resetSubmission,
                       ),
@@ -98,12 +99,14 @@ class ReportScreen extends StatelessWidget {
             ),
           );
         }
-        // Main Form Screen
+
+        // ── Main Form Screen ─────────────────────────────────────────────────
         return Scaffold(
           appBar: AppMainBar(showBack: true),
           backgroundColor: colorScheme.surface,
           body: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            padding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -133,7 +136,7 @@ class ReportScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          "Report an Incident",
+                          'Report an Incident',
                           style: TextStyle(
                             fontSize: 22,
                             fontWeight: FontWeight.bold,
@@ -142,7 +145,7 @@ class ReportScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          "Help keep our community safe",
+                          'Help keep our community safe',
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
@@ -154,6 +157,8 @@ class ReportScreen extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 12),
+
+                // Anonymous notice
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(12),
@@ -169,18 +174,19 @@ class ReportScreen extends StatelessWidget {
                     ),
                   ),
                   child: Text(
-                    "🔒 Your report is completely anonymous. We don't collect personal information.",
+                    '🔒 Your report is completely anonymous. We don\'t collect personal information.',
                     style: TextStyle(
-                      color: isDark ? AppColor.teal300 : AppColor.teal700,
+                      color:
+                      isDark ? AppColor.teal300 : AppColor.teal700,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
                 ),
                 const SizedBox(height: 24),
 
-                // Incident Type
+                // ── Incident Type ────────────────────────────────────────────
                 Text(
-                  "What happened?",
+                  'What happened?',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -188,50 +194,81 @@ class ReportScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 8),
+
+                // FIX: Redesigned error banner — styled red container with
+                // icon, much more visible than the previous plain red text
+                if (controller.errorMessage != null)
+                  Container(
+                    width: double.infinity,
+                    margin: const EdgeInsets.only(bottom: 12),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: Colors.red.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                          color: Colors.red.withValues(alpha: 0.4)),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.error_outline,
+                            color: Colors.red, size: 18),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            controller.errorMessage!,
+                            style: const TextStyle(
+                                color: Colors.red, fontSize: 13),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
                 Column(
                   children: [
                     _buildRadioCard(
                       context,
-                      label: "Street Harassment",
-                      value: "harassment",
-                      groupValue: controller.incidentType,
-                      onChanged: controller.setIncidentType,
+                      label: 'Street Harassment',
+                      value: 'harassment',
+                      groupValue: controller.categoryId ?? '',
+                      onChanged: controller.setCategory,
                     ),
                     _buildRadioCard(
                       context,
-                      label: "Theft / Snatching",
-                      value: "theft",
-                      groupValue: controller.incidentType,
-                      onChanged: controller.setIncidentType,
+                      label: 'Theft / Snatching',
+                      value: 'theft',
+                      groupValue: controller.categoryId ?? '',
+                      onChanged: controller.setCategory,
                     ),
                     _buildRadioCard(
                       context,
-                      label: "Criminal Activity",
-                      value: "crime",
-                      groupValue: controller.incidentType,
-                      onChanged: controller.setIncidentType,
+                      label: 'Criminal Activity',
+                      value: 'crime',
+                      groupValue: controller.categoryId ?? '',
+                      onChanged: controller.setCategory,
                     ),
                     _buildRadioCard(
                       context,
-                      label: "Stalking / Following",
-                      value: "stalking",
-                      groupValue: controller.incidentType,
-                      onChanged: controller.setIncidentType,
+                      label: 'Stalking / Following',
+                      value: 'stalking',
+                      groupValue: controller.categoryId ?? '',
+                      onChanged: controller.setCategory,
                     ),
                     _buildRadioCard(
                       context,
-                      label: "Other Safety Concern",
-                      value: "other",
-                      groupValue: controller.incidentType,
-                      onChanged: controller.setIncidentType,
+                      label: 'Other Safety Concern',
+                      value: 'other',
+                      groupValue: controller.categoryId ?? '',
+                      onChanged: controller.setCategory,
                     ),
                   ],
                 ),
                 const SizedBox(height: 16),
 
-                // Severity Level
+                // ── Severity ─────────────────────────────────────────────────
                 Text(
-                  "How serious was it?",
+                  'How serious was it?',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -243,28 +280,28 @@ class ReportScreen extends StatelessWidget {
                   children: [
                     _buildSeverityCard(
                       context,
-                      title: "HIGH RISK",
-                      subtitle: "Immediate danger",
+                      title: 'HIGH RISK',
+                      subtitle: 'Immediate danger',
                       badgeColor: AppColor.dangerRed,
-                      value: "high",
+                      value: 'high',
                       groupValue: controller.severity,
                       onChanged: controller.setSeverity,
                     ),
                     _buildSeverityCard(
                       context,
-                      title: "MEDIUM RISK",
-                      subtitle: "Concerning situation",
+                      title: 'MEDIUM RISK',
+                      subtitle: 'Concerning situation',
                       badgeColor: AppColor.alertOrange,
-                      value: "medium",
+                      value: 'medium',
                       groupValue: controller.severity,
                       onChanged: controller.setSeverity,
                     ),
                     _buildSeverityCard(
                       context,
-                      title: "LOW RISK",
-                      subtitle: "Minor incident",
+                      title: 'LOW RISK',
+                      subtitle: 'Minor incident',
                       badgeColor: AppColor.warningAmber,
-                      value: "low",
+                      value: 'low',
                       groupValue: controller.severity,
                       onChanged: controller.setSeverity,
                     ),
@@ -272,9 +309,9 @@ class ReportScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
 
-                // Location Input
+                // ── Location ─────────────────────────────────────────────────
                 Text(
-                  "Where did this happen?",
+                  'Where did this happen?',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -288,67 +325,62 @@ class ReportScreen extends StatelessWidget {
                       child: TextField(
                         controller: controller.locationController,
                         style: TextStyle(
-                          color: AppColor.getTextPrimary(context),
-                        ),
+                            color: AppColor.getTextPrimary(context)),
                         decoration: InputDecoration(
-                          hintText: "Enter location manually",
+                          hintText: 'Enter location manually',
                           hintStyle: TextStyle(
-                            color: AppColor.getTextTertiary(context),
-                          ),
+                              color: AppColor.getTextTertiary(context)),
                           filled: true,
-                          fillColor: AppColor.getContainerBackground(context),
+                          fillColor:
+                          AppColor.getContainerBackground(context),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
                             borderSide: BorderSide(
-                              color: AppColor.getContainerBorder(context),
-                            ),
+                                color:
+                                AppColor.getContainerBorder(context)),
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
                             borderSide: BorderSide(
-                              color: AppColor.getContainerBorder(context),
-                            ),
+                                color:
+                                AppColor.getContainerBorder(context)),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
                             borderSide: BorderSide(
-                              color: AppColor.getInteractivePrimary(context),
-                            ),
+                                color: AppColor.getInteractivePrimary(
+                                    context)),
                           ),
                           contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 1,
-                          ),
+                              horizontal: 12, vertical: 1),
                         ),
                       ),
                     ),
                     const SizedBox(width: 8),
                     ElevatedButton(
                       onPressed: () async {
-                        final result = await showDialog<Map<String, dynamic>>(
+                        final result =
+                        await showDialog<Map<String, dynamic>>(
                           context: context,
                           builder: (_) => const MapLocationPopup(),
                         );
                         if (result != null) {
                           controller.setSelectedLocation(
-                            latLng: result["latLng"],
-                            address: result["address"],
+                            latLng: result['latLng'],
+                            address: result['address'],
                           );
                         }
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColor.getContainerBackground(
-                          context,
-                        ),
-                        foregroundColor: AppColor.getInteractivePrimary(
-                          context,
-                        ),
+                        backgroundColor:
+                        AppColor.getContainerBackground(context),
+                        foregroundColor:
+                        AppColor.getInteractivePrimary(context),
                         side: BorderSide(
-                          color: AppColor.getInteractivePrimary(context),
-                        ),
+                            color:
+                            AppColor.getInteractivePrimary(context)),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
+                            borderRadius: BorderRadius.circular(16)),
                         minimumSize: const Size(46, 46),
                       ),
                       child: const Icon(Icons.location_pin),
@@ -357,17 +389,16 @@ class ReportScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  "💡 Or use current location (automatically detected)",
+                  '💡 Or use current location (automatically detected)',
                   style: TextStyle(
-                    fontSize: 12,
-                    color: AppColor.getTextSecondary(context),
-                  ),
+                      fontSize: 12,
+                      color: AppColor.getTextSecondary(context)),
                 ),
                 const SizedBox(height: 16),
 
-                // Time
+                // ── Date ─────────────────────────────────────────────────────
                 Text(
-                  "When did this happen?",
+                  'When did this happen?',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -376,7 +407,7 @@ class ReportScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  "Date",
+                  'Date',
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
@@ -387,53 +418,48 @@ class ReportScreen extends StatelessWidget {
                 TextField(
                   controller: controller.dateController,
                   readOnly: true,
-                  style: TextStyle(color: AppColor.getTextPrimary(context)),
+                  style:
+                  TextStyle(color: AppColor.getTextPrimary(context)),
                   decoration: InputDecoration(
-                    hintText: "Select Date",
+                    hintText: 'Select Date',
                     hintStyle: TextStyle(
-                      color: AppColor.getTextTertiary(context),
-                    ),
+                        color: AppColor.getTextTertiary(context)),
                     filled: true,
                     fillColor: AppColor.getContainerBackground(context),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(16),
                       borderSide: BorderSide(
-                        color: AppColor.getContainerBorder(context),
-                      ),
+                          color: AppColor.getContainerBorder(context)),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(16),
                       borderSide: BorderSide(
-                        color: AppColor.getContainerBorder(context),
-                      ),
+                          color: AppColor.getContainerBorder(context)),
                     ),
                     contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 12,
-                    ),
-                    suffixIcon: Icon(
-                      Icons.calendar_today,
-                      color: AppColor.getIconPrimary(context),
-                    ),
+                        horizontal: 12, vertical: 12),
+                    suffixIcon: Icon(Icons.calendar_today,
+                        color: AppColor.getIconPrimary(context)),
                   ),
                   onTap: () async {
-                    DateTime? picked = await showDatePicker(
+                    final DateTime? picked = await showDatePicker(
                       context: context,
                       initialDate: DateTime.now(),
                       firstDate: DateTime(2020),
-                      lastDate: DateTime(2100),
+                      lastDate: DateTime.now(),
                     );
-
                     if (picked != null) {
-                      controller.dateController.text =
-                          "${picked.day}-${picked.month}-${picked.year}";
+                      // FIX: call controller.setDate() so the real DateTime
+                      // is stored — previously only the text field was updated
+                      controller.setDate(picked);
                     }
                   },
                 ),
-
                 const SizedBox(height: 16),
+
+                // ── Time ─────────────────────────────────────────────────────
                 Text(
-                  "Time",
+                  'Time',
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
@@ -444,53 +470,49 @@ class ReportScreen extends StatelessWidget {
                 TextField(
                   controller: controller.timeController,
                   readOnly: true,
-                  style: TextStyle(color: AppColor.getTextPrimary(context)),
+                  style:
+                  TextStyle(color: AppColor.getTextPrimary(context)),
                   decoration: InputDecoration(
-                    hintText: "Select Time",
+                    hintText: 'Select Time',
                     hintStyle: TextStyle(
-                      color: AppColor.getTextTertiary(context),
-                    ),
+                        color: AppColor.getTextTertiary(context)),
                     filled: true,
                     fillColor: AppColor.getContainerBackground(context),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(16),
                       borderSide: BorderSide(
-                        color: AppColor.getContainerBorder(context),
-                      ),
+                          color: AppColor.getContainerBorder(context)),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(16),
                       borderSide: BorderSide(
-                        color: AppColor.getContainerBorder(context),
-                      ),
+                          color: AppColor.getContainerBorder(context)),
                     ),
                     contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 12,
-                    ),
-                    suffixIcon: Icon(
-                      Icons.access_time,
-                      color: AppColor.getIconPrimary(context),
-                    ),
+                        horizontal: 12, vertical: 12),
+                    suffixIcon: Icon(Icons.access_time,
+                        color: AppColor.getIconPrimary(context)),
                   ),
                   onTap: () async {
-                    TimeOfDay? pickedTime = await showTimePicker(
+                    final TimeOfDay? pickedTime = await showTimePicker(
                       context: context,
                       initialTime: TimeOfDay.now(),
                     );
-
                     if (pickedTime != null) {
-                      controller.timeController.text = pickedTime.format(
-                        context,
-                      );
+                      // FIX: call controller.setTime() so the real TimeOfDay
+                      // is stored. The formatted string is passed from here
+                      // because TimeOfDay.format() needs a BuildContext that
+                      // the controller must not hold.
+                      controller.setTime(
+                          pickedTime, pickedTime.format(context));
                     }
                   },
                 ),
-
                 const SizedBox(height: 16),
-                // Description
+
+                // ── Description ──────────────────────────────────────────────
                 Text(
-                  "Additional Details (Optional)",
+                  'Additional Details (Optional)',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -501,49 +523,46 @@ class ReportScreen extends StatelessWidget {
                 TextField(
                   controller: controller.descriptionController,
                   maxLines: 5,
-                  style: TextStyle(color: AppColor.getTextPrimary(context)),
+                  style:
+                  TextStyle(color: AppColor.getTextPrimary(context)),
                   decoration: InputDecoration(
                     hintText:
-                        "Provide any additional details that might help others stay safe...",
+                    'Provide any additional details that might help others stay safe...',
                     hintStyle: TextStyle(
-                      color: AppColor.getTextTertiary(context),
-                    ),
+                        color: AppColor.getTextTertiary(context)),
                     filled: true,
                     fillColor: AppColor.getContainerBackground(context),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(16),
                       borderSide: BorderSide(
-                        color: AppColor.getContainerBorder(context),
-                      ),
+                          color: AppColor.getContainerBorder(context)),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(16),
                       borderSide: BorderSide(
-                        color: AppColor.getContainerBorder(context),
-                      ),
+                          color: AppColor.getContainerBorder(context)),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(16),
                       borderSide: BorderSide(
-                        color: AppColor.getInteractivePrimary(context),
-                      ),
+                          color:
+                          AppColor.getInteractivePrimary(context)),
                     ),
                     contentPadding: const EdgeInsets.all(12),
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  "🔒 No personal information will be shared",
+                  '🔒 No personal information will be shared',
                   style: TextStyle(
-                    fontSize: 12,
-                    color: AppColor.getTextSecondary(context),
-                  ),
+                      fontSize: 12,
+                      color: AppColor.getTextSecondary(context)),
                 ),
                 const SizedBox(height: 16),
 
-                // Photo Upload
+                // ── Photo Upload ─────────────────────────────────────────────
                 Text(
-                  "Add Photo (Optional)",
+                  'Add Photo (Optional)',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -552,7 +571,6 @@ class ReportScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
 
-                // Show image preview if selected
                 if (controller.selectedImage != null)
                   Stack(
                     children: [
@@ -576,11 +594,8 @@ class ReportScreen extends StatelessWidget {
                               color: Colors.black54,
                               shape: BoxShape.circle,
                             ),
-                            child: const Icon(
-                              Icons.close,
-                              color: Colors.white,
-                              size: 18,
-                            ),
+                            child: const Icon(Icons.close,
+                                color: Colors.white, size: 18),
                           ),
                         ),
                       ),
@@ -588,11 +603,10 @@ class ReportScreen extends StatelessWidget {
                   ),
 
                 const SizedBox(height: 8),
-
                 GestureDetector(
                   behavior: HitTestBehavior.opaque,
                   onTap: () {
-                    FocusScope.of(context).unfocus(); // 🔑 important
+                    FocusScope.of(context).unfocus();
                     _showImagePickerBottomSheet(context, controller);
                   },
                   child: Container(
@@ -609,17 +623,17 @@ class ReportScreen extends StatelessWidget {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(
-                          Icons.camera_alt,
-                          color: AppColor.getInteractivePrimary(context),
-                        ),
+                        Icon(Icons.camera_alt,
+                            color:
+                            AppColor.getInteractivePrimary(context)),
                         const SizedBox(width: 8),
                         Text(
                           controller.selectedImage == null
-                              ? "Upload Photo"
-                              : "Change Photo",
+                              ? 'Upload Photo'
+                              : 'Change Photo',
                           style: TextStyle(
-                            color: AppColor.getInteractivePrimary(context),
+                            color:
+                            AppColor.getInteractivePrimary(context),
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -627,25 +641,27 @@ class ReportScreen extends StatelessWidget {
                     ),
                   ),
                 ),
-
                 const SizedBox(height: 4),
+                // FIX: Added "Max 5 MB" so users know the limit before picking
                 Text(
-                  "📸 Images are reviewed before being shared",
+                  '📸 Images are reviewed before being shared  •  Max 5 MB',
                   style: TextStyle(
-                    fontSize: 12,
-                    color: AppColor.getTextSecondary(context),
-                  ),
+                      fontSize: 12,
+                      color: AppColor.getTextSecondary(context)),
                 ),
                 const SizedBox(height: 24),
 
-                // Submit Button
+                // ── Submit Button ────────────────────────────────────────────
                 SizedBox(
                   width: double.infinity,
                   height: 52,
-                  child: CustomButton(
-                    text: "Submit Anonymous Report",
+                  child: controller.isLoading
+                      ? const Center(child: CircularProgressIndicator())
+                      : CustomButton(
+                    text: 'Submit Anonymous Report',
                     textColor: Colors.white,
-                    buttonColor: AppColor.getInteractivePrimary(context),
+                    buttonColor:
+                    AppColor.getInteractivePrimary(context),
                     fontSize: 16,
                     onPressed: controller.handleSubmit,
                   ),
@@ -659,64 +675,57 @@ class ReportScreen extends StatelessWidget {
     );
   }
 
-  // ---------------- Helper Widgets ----------------
+  // ── Helper Widgets ─────────────────────────────────────────────────────────
+
   void _showImagePickerBottomSheet(
-    BuildContext context,
-    ReportController controller,
-  ) {
+      BuildContext context,
+      ReportController controller,
+      ) {
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       backgroundColor: AppColor.getContainerBackground(context),
-      builder: (_) {
-        return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                leading: Icon(
-                  Icons.camera_alt,
-                  color: AppColor.getIconPrimary(context),
-                ),
-                title: Text(
-                  "Take photo",
-                  style: TextStyle(color: AppColor.getTextPrimary(context)),
-                ),
-                onTap: () {
-                  Navigator.pop(context);
-                  controller.pickImage(ImageSource.camera);
-                },
-              ),
-              ListTile(
-                leading: Icon(
-                  Icons.photo_library,
-                  color: AppColor.getIconPrimary(context),
-                ),
-                title: Text(
-                  "Choose from gallery",
-                  style: TextStyle(color: AppColor.getTextPrimary(context)),
-                ),
-                onTap: () {
-                  Navigator.pop(context);
-                  controller.pickImage(ImageSource.gallery);
-                },
-              ),
-            ],
-          ),
-        );
-      },
+      builder: (_) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: Icon(Icons.camera_alt,
+                  color: AppColor.getIconPrimary(context)),
+              title: Text('Take photo',
+                  style: TextStyle(
+                      color: AppColor.getTextPrimary(context))),
+              onTap: () {
+                Navigator.pop(context);
+                controller.pickImage(ImageSource.camera);
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.photo_library,
+                  color: AppColor.getIconPrimary(context)),
+              title: Text('Choose from gallery',
+                  style: TextStyle(
+                      color: AppColor.getTextPrimary(context))),
+              onTap: () {
+                Navigator.pop(context);
+                controller.pickImage(ImageSource.gallery);
+              },
+            ),
+          ],
+        ),
+      ),
     );
   }
 
   Widget _buildRadioCard(
-    BuildContext context, {
-    required String label,
-    required String value,
-    required String groupValue,
-    required Function(String) onChanged,
-  }) {
+      BuildContext context, {
+        required String label,
+        required String value,
+        required String groupValue,
+        required Function(String) onChanged,
+      }) {
     final isSelected = value == groupValue;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -726,9 +735,8 @@ class ReportScreen extends StatelessWidget {
         margin: const EdgeInsets.symmetric(vertical: 4),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppColor.getInteractivePrimary(
-                  context,
-                ).withValues(alpha: isDark ? 0.2 : 0.1)
+              ? AppColor.getInteractivePrimary(context)
+              .withValues(alpha: isDark ? 0.2 : 0.1)
               : AppColor.getContainerBackground(context),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
@@ -762,14 +770,14 @@ class ReportScreen extends StatelessWidget {
   }
 
   Widget _buildSeverityCard(
-    BuildContext context, {
-    required String title,
-    required String subtitle,
-    required Color badgeColor,
-    required String value,
-    required String groupValue,
-    required Function(String) onChanged,
-  }) {
+      BuildContext context, {
+        required String title,
+        required String subtitle,
+        required Color badgeColor,
+        required String value,
+        required String groupValue,
+        required Function(String) onChanged,
+      }) {
     final isSelected = value == groupValue;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -779,9 +787,8 @@ class ReportScreen extends StatelessWidget {
         margin: const EdgeInsets.symmetric(vertical: 4),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppColor.getInteractivePrimary(
-                  context,
-                ).withValues(alpha: isDark ? 0.2 : 0.1)
+              ? AppColor.getInteractivePrimary(context)
+              .withValues(alpha: isDark ? 0.2 : 0.1)
               : AppColor.getContainerBackground(context),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
@@ -801,7 +808,8 @@ class ReportScreen extends StatelessWidget {
             ),
             const SizedBox(width: 8),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              padding:
+              const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
                 color: badgeColor,
                 borderRadius: BorderRadius.circular(12),

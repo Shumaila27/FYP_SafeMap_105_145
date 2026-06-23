@@ -52,3 +52,4 @@ app.*.map.json
 #agent files
 .agents/
 skills-lock.json
+assets/service_account.json

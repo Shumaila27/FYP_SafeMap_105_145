@@ -4,28 +4,93 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:staysafe/view/screens/auth_checker_screen.dart';
+import 'package:staysafe/view/screens/dashboard.dart';
 import 'Controller/chat_controller.dart';
 import 'Controller/auth_provider.dart';
+import 'Controller/map_controller.dart';
 import 'Controller/theme_controller.dart';
 import 'Controller/report_controller.dart';
+
+final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
+
+// ✅ NEW — global navigator key so notification taps can navigate
+// without needing a BuildContext.
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp();
+}
+
+// ✅ NEW — central place that reacts to a notification's "screen" field.
+// Currently only "map" is used (Safe Walk started / ended / emergency),
+// but more screens can be added here later.
+void _handleNotificationNavigation(RemoteMessage message) {
+  final screen = message.data['screen'];
+
+  if (screen == 'map') {
+    // ✅ NEW — refresh guardian's tracked walk immediately so the
+    // marker/banner appears even if MapScreen is already mounted
+    // and won't re-run init().
+    final ctx = navigatorKey.currentContext;
+    if (ctx != null) {
+      ctx.read<MapController>().refreshTrackedWalk();
+    }
+
+    navigatorKey.currentState?.pushAndRemoveUntil(
+      MaterialPageRoute(builder: (_) => const DashBoardScreen()),
+          (route) => false,
+    );
+  }
+}
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-  //Loading of .env file
+
   await dotenv.load(fileName: ".env");
+
   await Supabase.initialize(
     url: dotenv.env['SUPABASE_URL']!,
     anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
   );
+
+  // Initialize Firebase
+  await Firebase.initializeApp();
+
+  // Register background handler
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
+  // Request notification permission
+  await FirebaseMessaging.instance.requestPermission(
+    alert: true,
+    badge: true,
+    sound: true,
+  );
+
+  // ✅ NEW — App opened from a TERMINATED state by tapping a notification
+  final initialMessage = await FirebaseMessaging.instance.getInitialMessage();
+  if (initialMessage != null) {
+    // Navigation here happens after runApp, so we defer it slightly
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _handleNotificationNavigation(initialMessage);
+    });
+  }
+
+  // ✅ NEW — App was in BACKGROUND and brought to foreground via notification tap
+  FirebaseMessaging.onMessageOpenedApp.listen(_handleNotificationNavigation);
+
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => ReportController()),
-        ChangeNotifierProvider(create: (_) => ChatController()),
+        ChangeNotifierProvider(create: (_) => ChatController()..init()),
         ChangeNotifierProvider(create: (_) => ThemeController()),
+        ChangeNotifierProvider(create: (_) => MapController()),
       ],
       child: const MyApp(),
     ),
@@ -45,7 +110,9 @@ class MyApp extends StatelessWidget {
           builder: (context, themeController, _) {
             const seedColor = Color(0xFF14B8A6);
             return MaterialApp(
+              navigatorKey: navigatorKey, // ✅ NEW
               debugShowCheckedModeBanner: false,
+              navigatorObservers: [routeObserver],
               themeMode: themeController.themeMode,
               theme: ThemeData(
                 useMaterial3: true,
@@ -61,15 +128,12 @@ class MyApp extends StatelessWidget {
                 ),
                 switchTheme: SwitchThemeData(
                   thumbColor: WidgetStateProperty.resolveWith((states) {
-                    if (states.contains(WidgetState.selected)) {
-                      return seedColor;
-                    }
+                    if (states.contains(WidgetState.selected)) return seedColor;
                     return const Color(0xFF9CA3AF);
                   }),
                   trackColor: WidgetStateProperty.resolveWith((states) {
-                    if (states.contains(WidgetState.selected)) {
+                    if (states.contains(WidgetState.selected))
                       return seedColor.withValues(alpha: 0.35);
-                    }
                     return const Color(0xFFE5E7EB);
                   }),
                 ),
@@ -88,15 +152,13 @@ class MyApp extends StatelessWidget {
                 ),
                 switchTheme: SwitchThemeData(
                   thumbColor: WidgetStateProperty.resolveWith((states) {
-                    if (states.contains(WidgetState.selected)) {
+                    if (states.contains(WidgetState.selected))
                       return const Color(0xFF2DD4BF);
-                    }
                     return const Color(0xFF94A3B8);
                   }),
                   trackColor: WidgetStateProperty.resolveWith((states) {
-                    if (states.contains(WidgetState.selected)) {
+                    if (states.contains(WidgetState.selected))
                       return const Color(0xFF2DD4BF).withValues(alpha: 0.35);
-                    }
                     return const Color(0xFF334155);
                   }),
                 ),

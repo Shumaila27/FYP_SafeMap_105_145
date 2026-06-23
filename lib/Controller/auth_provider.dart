@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import '../Models/auth_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../services/fcm_service.dart';
 
 enum AuthStatus { idle, loading, success, error }
 
@@ -45,6 +46,7 @@ class AuthProvider extends ChangeNotifier {
       if (response.user != null) {
         _status = AuthStatus.success;
         notifyListeners();
+        await FCMService.instance.saveTokenToSupabase();  // ← ADD THIS
         return true;
       }
 
@@ -96,6 +98,7 @@ class AuthProvider extends ChangeNotifier {
         // Since email confirmation is disabled, user is automatically signed up and logged in
         _status = AuthStatus.success;
         notifyListeners();
+        await FCMService.instance.saveTokenToSupabase();
         return true;
       }
 

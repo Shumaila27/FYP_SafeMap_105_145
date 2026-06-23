@@ -54,3 +54,23 @@ CREATE POLICY "Anyone can view reports" ON reports
 
 CREATE POLICY "Anyone can view categories" ON report_categories
   FOR SELECT USING (is_active = true);
+
+ -- make sure the description must be optional so
+ ALTER TABLE reports ALTER COLUMN description DROP NOT NULL;
+
+
+---Right now updated_at only updates when you manually set it in updateReportStatus. On every other update it stays stale. Add a trigger so it's automatic:
+-- Create the trigger function once
+CREATE OR REPLACE FUNCTION set_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Attach it to reports
+CREATE TRIGGER reports_updated_at
+  BEFORE UPDATE ON reports
+  FOR EACH ROW
+  EXECUTE FUNCTION set_updated_at();
