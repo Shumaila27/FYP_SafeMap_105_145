@@ -206,18 +206,41 @@ class ProfileService {
   Future<UserProfile> fetchProfile() async {
     debugPrint('[ProfileService] fetchProfile() called — uid: $_uid');
 
-    // ✅ FIX 1: Use maybeSingle() — never throws on 0 rows
-    var data = await _client
-        .from('profiles')
-        .select('*')
-        .eq('id', _uid)
-        .maybeSingle();
+    // Use maybeSingle() to avoid throwing on 0 rows.
+    // Wrap in try/catch: if RLS blocks even the SELECT, we fall back to auth metadata.
+    Map<String, dynamic>? data;
+    try {
+      data = await _client
+          .from('profiles')
+          .select('*')
+          .eq('id', _uid)
+          .maybeSingle();
+      debugPrint('[ProfileService] profile row: ${data == null ? "NOT FOUND" : "FOUND name=${data["name"]}"}');
+    } catch (e) {
+      debugPrint('[ProfileService] profiles SELECT failed: $e');
+      // Cannot read profile at all — build from auth metadata
+      final authUser = _client.auth.currentUser;
+      return UserProfile(
+        id:         _uid,
+        name:       authUser?.userMetadata?['full_name'] as String?
+            ?? authUser?.email?.split('@').first
+            ?? 'User',
+        email:      authUser?.email ?? '',
+        phone:      authUser?.userMetadata?['phone'] as String?,
+        avatarUrl:  null,
+        isVerified: false,
+        isGuardian: false,
+        createdAt:  DateTime.now(),
+      );
+    }
 
-    if (data == null || 
-        (data['name'] as String? ?? '').trim().isEmpty || 
-        (data['phone'] as String? ?? '').trim().isEmpty) {
-      // ✅ FIX 2: Profile missing/incomplete — restore/enrich from users/metadata
-      debugPrint('[ProfileService] Profile missing/incomplete — restoring/enriching');
+    // FIX: Only restore/enrich when the profile row is completely missing
+    // OR when the name is empty. Phone is OPTIONAL — never trigger upsert just
+    // because phone is null (that caused infinite loading due to RLS blocking
+    // the INSERT path of upsert when no INSERT policy existed).
+    final nameIsEmpty = (data?['name'] as String? ?? '').trim().isEmpty;
+    if (data == null || nameIsEmpty) {
+      debugPrint('[ProfileService] Profile missing/name empty — restoring from users table / auth metadata');
 
       // Try to get name/email/phone from public.users table (written at signup)
       Map<String, dynamic>? userData;
@@ -234,35 +257,87 @@ class ProfileService {
 
       // Fall back to Supabase Auth metadata if users table also has no row
       final authUser = _client.auth.currentUser;
-      final existingName = data?['name'] as String? ?? '';
+      final existingName  = data?['name']  as String? ?? '';
       final existingEmail = data?['email'] as String? ?? '';
-      final existingPhone = data?['phone'] as String? ?? '';
+      final existingPhone = data?['phone'] as String?; // nullable — do NOT coerce to ''
 
-      final name  = existingName.isNotEmpty ? existingName : (userData?['full_name'] as String?
+      final name  = existingName.isNotEmpty  ? existingName  : (userData?['full_name'] as String?
           ?? authUser?.userMetadata?['full_name'] as String?
           ?? authUser?.email?.split('@').first
           ?? 'User');
       final email = existingEmail.isNotEmpty ? existingEmail : (userData?['email'] as String?
           ?? authUser?.email
           ?? '');
-      final phone = existingPhone.isNotEmpty ? existingPhone : (userData?['phone'] as String?
-          ?? authUser?.userMetadata?['phone'] as String?);
+      // Only set phone if we actually have one — never overwrite a real value with null
+      final phone = existingPhone?.isNotEmpty == true
+          ? existingPhone
+          : (userData?['phone'] as String? ?? authUser?.userMetadata?['phone'] as String?);
 
-      final cleanPhone = phone != null ? phone.replaceAll(RegExp(r'\D'), '') : null;
+      final cleanPhone = phone != null && phone.isNotEmpty
+          ? phone.replaceAll(RegExp(r'\D'), '')
+          : null;
 
-      // Upsert a new/updated row in profiles
-      data = await _client.from('profiles').upsert({
-        'id':          _uid,
-        'name':        name,
-        'email':       email,
-        'phone':       cleanPhone,
-        'is_verified': data?['is_verified'] ?? false,
-        'is_guardian': data?['is_guardian'] ?? false,
-        'created_at':  data?['created_at'] ?? DateTime.now().toIso8601String(),
-        'updated_at':  DateTime.now().toIso8601String(),
-      }).select().single();
+      try {
+        // Use UPDATE if the profile row already exists (avoids INSERT RLS issues),
+        // otherwise fall back to upsert only when there is truly no row.
+        if (data != null) {
+          // Row exists but name is empty — just UPDATE the missing fields
+          await _client.from('profiles').update({
+            'name':       name,
+            'email':      email,
+            'phone':      cleanPhone,
+            'updated_at': DateTime.now().toIso8601String(),
+          }).eq('id', _uid);
 
-      debugPrint('[ProfileService] profiles row created/updated — name: $name, phone: $cleanPhone');
+          // Re-fetch after update using maybeSingle (NOT single — avoids throw on 0 rows)
+          data = await _client
+              .from('profiles')
+              .select('*')
+              .eq('id', _uid)
+              .maybeSingle();
+        } else {
+          // No row at all — upsert creates it. Requires INSERT RLS policy.
+          // Use maybeSingle (NOT single) to avoid throw if RLS blocks the return
+          data = await _client.from('profiles').upsert({
+            'id':          _uid,
+            'name':        name,
+            'email':       email,
+            'phone':       cleanPhone,
+            'is_verified': false,
+            'is_guardian': false,
+            'created_at':  DateTime.now().toIso8601String(),
+            'updated_at':  DateTime.now().toIso8601String(),
+          }).select().maybeSingle();
+        }
+        debugPrint('[ProfileService] profiles row restored — name: $name, phone: $cleanPhone');
+      } catch (e) {
+        debugPrint('[ProfileService] profiles restore failed: $e — returning partial data');
+        // Always return a valid profile so the screen loads
+        return UserProfile(
+          id:         _uid,
+          name:       name,
+          email:      email,
+          phone:      cleanPhone,
+          avatarUrl:  null,
+          isVerified: false,
+          isGuardian: false,
+          createdAt:  DateTime.now(),
+        );
+      }
+
+      // Upsert returned null (RLS blocked SELECT-after-insert) — use local data
+      if (data == null) {
+        return UserProfile(
+          id:         _uid,
+          name:       name,
+          email:      email,
+          phone:      cleanPhone,
+          avatarUrl:  null,
+          isVerified: false,
+          isGuardian: false,
+          createdAt:  DateTime.now(),
+        );
+      }
     }
 
     debugPrint('[ProfileService] fetchProfile() success — name: ${data['name']}, phone: ${data['phone']}');

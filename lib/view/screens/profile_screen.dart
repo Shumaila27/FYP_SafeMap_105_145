@@ -38,9 +38,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   File? _localAvatarFile;
   StreamSubscription<UserProfile>? _profileSub;
 
-  TextEditingController _nameCtrl  = TextEditingController();
-  TextEditingController _emailCtrl = TextEditingController();
-  TextEditingController _phoneCtrl = TextEditingController(); // ✅ Added
+  final TextEditingController _nameCtrl  = TextEditingController();
+  final TextEditingController _emailCtrl = TextEditingController();
+  final TextEditingController _phoneCtrl = TextEditingController(); // ✅ Added
   final TextEditingController _cNameCtrl  = TextEditingController();
   final TextEditingController _cPhoneCtrl = TextEditingController();
   final TextEditingController _cRelCtrl   = TextEditingController();
@@ -81,7 +81,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
     setState(() { _loading = true; _error = null; });
     try {
       debugPrint('[ProfileScreen] Calling ProfileService.loadAll()');
-      final data = await _svc.loadAll();
+      // Add a 15-second timeout so we never spin forever if Supabase is slow
+      final data = await _svc.loadAll().timeout(
+        const Duration(seconds: 15),
+        onTimeout: () => throw Exception(
+          'Profile load timed out. Please check your internet connection and try again.',
+        ),
+      );
       if (!mounted) return;
       debugPrint('[ProfileScreen] loadAll() succeeded — profile: ${data.profile.name}');
       setState(() {
@@ -92,7 +98,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _achievements = data.achievements;
         _nameCtrl.text  = _profile.name;
         _emailCtrl.text = _profile.email;
-        _phoneCtrl.text = _profile.phone ?? ''; // ✅ Added
+        _phoneCtrl.text = _profile.phone ?? '';
         _loading        = false;
       });
 
@@ -714,10 +720,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ElevatedButton(
               onPressed: _savingContact ? null : () async {
                 String? nameErr, phoneErr, relErr;
-                if (_cNameCtrl.text.trim().isEmpty)
+                if (_cNameCtrl.text.trim().isEmpty) {
                   nameErr = 'Name is required';
-                if (_cRelCtrl.text.trim().isEmpty)
+                }
+                if (_cRelCtrl.text.trim().isEmpty) {
                   relErr = 'Relation is required';
+                }
                 phoneErr = _validatePhone(_cPhoneCtrl.text);
 
                 if (nameErr != null ||
