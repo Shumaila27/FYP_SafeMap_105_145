@@ -42,4 +42,22 @@ class FCMService {
       debugPrint('[FCM] Error saving token: $e');
     }
   }
+
+  // ── Call this when user logs out ──────────────────────────
+  Future<void> clearTokenInSupabase() async {
+    try {
+      final uid = _supabase.auth.currentUser?.id;
+      if (uid == null) return;
+
+      // Clear fcm_token in the profiles table
+      await _supabase
+          .from('profiles')
+          .update({'fcm_token': null})
+          .eq('id', uid);
+
+      debugPrint('[FCM] Token cleared for uid: $uid');
+    } catch (e) {
+      debugPrint('[FCM] Error clearing token: $e');
+    }
+  }
 }

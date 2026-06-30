@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import '../../../utils/app_colors.dart';
 import '../../../utils/text_style.dart';
 import '../../widgets/buttons.dart';
@@ -26,7 +26,7 @@ class MainScreen extends StatelessWidget {
             // ✅ Main content adapts automatically to screen height
             Expanded(
               child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: 20.w),
+                padding: EdgeInsets.symmetric(horizontal: 20),
 
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly, // ✅ auto spacing
@@ -48,8 +48,8 @@ class MainScreen extends StatelessWidget {
                       flex: 2,
                       child: Image.asset(
                         "assets/logo.png",
-                        height: 120.h,
-                        width: 120.w,
+                        height: 120,
+                        width: 120,
                         fit: BoxFit.contain,
                       ),
                     ),
@@ -76,7 +76,7 @@ class MainScreen extends StatelessWidget {
                             );
                           },
                         ),
-                        SizedBox(height: 15.h),
+                        SizedBox(height: 15),
 
                         CustomButton(
                           text: "Sign Up",
@@ -92,7 +92,7 @@ class MainScreen extends StatelessWidget {
                       ],
                     ),
 
-                    SizedBox(height: 20.h), // ✅ small responsive padding
+                    SizedBox(height: 20), // ✅ small responsive padding
                   ],
                 ),
               ),

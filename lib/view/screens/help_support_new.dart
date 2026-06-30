@@ -372,12 +372,6 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
             iconColor: Colors.white,
             onTap: _openWhatsApp,
           ),
-          const SizedBox(height: 8),
-          OutlinedButton.icon(
-            onPressed: _openLiveChat,
-            icon: const Icon(Icons.chat_bubble_outline),
-            label: const Text("Open Live Chat Demo"),
-          ),
         ],
       ),
     );
@@ -671,90 +665,6 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text('Tutorial for $topic coming soon!')));
-  }
-
-  void _openLiveChat() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.green.shade100,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(Icons.chat, color: Colors.green.shade600, size: 20),
-            ),
-            const SizedBox(width: 12),
-            const Text('Live Chat Support'),
-          ],
-        ),
-        content: SizedBox(
-          height: 300,
-          child: Column(
-            children: [
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade100,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Support Agent: Hello! How can I help you today?',
-                        style: TextStyle(fontWeight: FontWeight.w500),
-                      ),
-                      SizedBox(height: 8),
-                      Text(
-                        'Typing indicator...',
-                        style: TextStyle(
-                          color: Colors.grey,
-                          fontStyle: FontStyle.italic,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                decoration: InputDecoration(
-                  hintText: 'Type your message...',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  suffixIcon: IconButton(
-                    icon: const Icon(Icons.send),
-                    onPressed: () {
-                      Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                            'Message sent! We\'ll respond shortly.',
-                          ),
-                          backgroundColor: Colors.green,
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close Chat'),
-          ),
-        ],
-      ),
-    );
   }
 
   void _sendEmail() async {

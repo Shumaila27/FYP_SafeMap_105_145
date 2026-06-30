@@ -15,6 +15,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:location/location.dart' as loc;
 import 'notification_service.dart';
 
 // ── Models ───────────────────────────────────────────────────
@@ -95,6 +96,11 @@ class SafeWalkService {
   RealtimeChannel?        _broadcastChannel;
   StreamSubscription<Position>? _positionSub;
 
+  // Mock Location fields for emulator testing
+  bool isMockLocation = false;
+  double? mockLat;
+  double? mockLng;
+
   // ✅ NEW — remembers which guardians are watching this walk
   // so endWalk() / sendEmergencyAlert() can notify them later
   // without needing the caller to pass the list again.
@@ -138,43 +144,62 @@ class SafeWalkService {
     required List<String> guardianUserIds, // profile IDs of guardians
   }) async {
     // 1. Get current location first
-    final position = await Geolocator.getCurrentPosition(
-      locationSettings: const LocationSettings(
-        accuracy: LocationAccuracy.high,
-      ),
+    double lat;
+    double lng;
+
+    if (isMockLocation && mockLat != null && mockLng != null) {
+      lat = mockLat!;
+      lng = mockLng!;
+    } else {
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+        ),
+      );
+      lat = position.latitude;
+      lng = position.longitude;
+    }
+
+    // 2. Create walk session + walk_guardians via RPC (SECURITY DEFINER
+    //    bypasses RLS entirely — fixes 42P17 infinite recursion crash)
+    final rpcResult = await _client.rpc(
+      'start_safe_walk',
+      params: {
+        'p_destination':  destination.trim(),
+        'p_current_lat':  lat,
+        'p_current_lng':  lng,
+        'p_guardian_ids': guardianUserIds,
+      },
     );
 
-    // 2. Create walk session in DB
-    final row = await _client
-        .from('safe_walks')
-        .insert({
-      'user_id':      _uid,
-      'destination':  destination.trim(),
-      'status':       'active',
-      'current_lat':  position.latitude,
-      'current_lng':  position.longitude,
-      'last_updated': DateTime.now().toIso8601String(),
-    })
-        .select()
-        .single();
+    if (rpcResult == null) {
+      throw Exception('Failed to start safe walk: empty response from server');
+    }
 
+    final row = Map<String, dynamic>.from(rpcResult as Map);
     _currentWalk = SafeWalk.fromMap(row);
 
-    // ✅ NEW — remember guardians for this walk (used by endWalk/emergency)
+    // Remember guardians for this walk (used by endWalk / emergency)
     _activeGuardianIds = guardianUserIds;
-
-    // 3. Insert walk_guardians rows (who is monitoring)
-    if (guardianUserIds.isNotEmpty) {
-      await _client.from('walk_guardians').insert(
-        guardianUserIds.map((gId) => {
-          'walk_id':     _currentWalk!.id,
-          'guardian_id': gId,
-        }).toList(),
-      );
-    }
 
     // 4. Start Supabase Realtime Broadcast channel
     _startBroadcastChannel(_currentWalk!.id);
+
+    // Enable background location tracking and show persistent notification
+    try {
+      final location = loc.Location();
+      await location.changeNotificationOptions(
+        channelName: 'Safe Walk Location Tracking',
+        title: '🛡️ Safe Walk Active',
+        subtitle: 'StaySafe is tracking and sharing your live location.',
+        iconName: 'ic_launcher',
+        onTapBringToFront: true,
+      );
+      final bgEnabled = await location.enableBackgroundMode(enable: true);
+      debugPrint('[SafeWalk] Background mode enabled: $bgEnabled');
+    } catch (e) {
+      debugPrint('[SafeWalk] Error enabling background mode: $e');
+    }
 
     // 5. Start location updates every 5 seconds
     _startLocationUpdates();
@@ -207,14 +232,29 @@ class SafeWalkService {
     if (_currentWalk == null) return;
 
     try {
-      final position = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
-        ),
-      );
+      double lat;
+      double lng;
 
-      final lat = position.latitude;
-      final lng = position.longitude;
+      if (isMockLocation && mockLat != null && mockLng != null) {
+        // Simulate walking by adding a tiny random delta every 5 seconds
+        // so the guardian sees the marker actually moving live on the map!
+        final randomSignLat = DateTime.now().second % 2 == 0 ? 1 : -1;
+        final randomSignLng = DateTime.now().second % 3 == 0 ? 1 : -1;
+        // ~10-15 meters movement
+        mockLat = mockLat! + (randomSignLat * 0.00010);
+        mockLng = mockLng! + (randomSignLng * 0.00010);
+        lat = mockLat!;
+        lng = mockLng!;
+      } else {
+        final position = await Geolocator.getCurrentPosition(
+          locationSettings: const LocationSettings(
+            accuracy: LocationAccuracy.high,
+          ),
+        );
+        lat = position.latitude;
+        lng = position.longitude;
+      }
+
       final now = DateTime.now().toIso8601String();
 
       // Update current location in safe_walks table
@@ -417,29 +457,50 @@ class SafeWalkService {
   //  GUARDIAN — fetch active walks assigned to me
   // ════════════════════════════════════════════════════════════
 
+  /// Fetches active safe walks where the current user is a guardian.
+  /// Uses a two-step query to avoid triggering any RLS circular references.
   Future<List<SafeWalk>> fetchMyAssignedWalks() async {
     try {
-      final rows = await _client
+      // Step 1: get walk IDs assigned to me from walk_guardians
+      final guardianRows = await _client
+          .from('walk_guardians')
+          .select('walk_id')
+          .eq('guardian_id', _uid);
+
+      if (guardianRows.isEmpty) return [];
+
+      final walkIds = guardianRows
+          .map((r) => r['walk_id'] as String)
+          .toList();
+
+      // Step 2: fetch those specific walks that are still active
+      final walkRows = await _client
           .from('safe_walks')
-          .select('*, walk_guardians!inner(guardian_id)')
-          .eq('walk_guardians.guardian_id', _uid)
+          .select()
+          .inFilter('id', walkIds)
           .eq('status', 'active')
           .order('started_at', ascending: false);
 
-      return rows.map((r) => SafeWalk.fromMap(r)).toList();
+      return walkRows.map((r) => SafeWalk.fromMap(r)).toList();
     } catch (e) {
       debugPrint('[SafeWalk] fetchMyAssignedWalks error: $e');
       return [];
     }
   }
 
-  /// Stream that fires whenever a new walk is assigned to this guardian.
-  Stream<List<SafeWalk>> guardianActiveWalksStream() {
-    return _client
-        .from('safe_walks')
-        .stream(primaryKey: ['id'])
-        .eq('status', 'active')
-        .map((rows) => rows.map((r) => SafeWalk.fromMap(r)).toList());
+  /// Real-time stream of active walks assigned to this guardian.
+  /// Polls walk_guardians first, then streams only the relevant walk IDs.
+  /// NOTE: For live updates, the guardian relies on the Realtime Broadcast
+  /// channel (guardianWalkEventStream). This stream is used for initial load.
+  Stream<List<SafeWalk>> guardianActiveWalksStream() async* {
+    // Initial fetch
+    final walks = await fetchMyAssignedWalks();
+    yield walks;
+
+    // Re-fetch every 30 seconds as a lightweight polling fallback
+    // (the main real-time updates come via Realtime broadcast channel)
+    yield* Stream.periodic(const Duration(seconds: 30))
+        .asyncMap((_) => fetchMyAssignedWalks());
   }
 
   // ════════════════════════════════════════════════════════════
@@ -465,6 +526,14 @@ class SafeWalkService {
   // ════════════════════════════════════════════════════════════
 
   void _cleanup() {
+    // Disable background location tracking and dismiss persistent notification
+    try {
+      loc.Location().enableBackgroundMode(enable: false);
+      debugPrint('[SafeWalk] Background mode disabled');
+    } catch (e) {
+      debugPrint('[SafeWalk] Error disabling background mode: $e');
+    }
+
     _locationTimer?.cancel();
     _locationTimer = null;
     _broadcastChannel?.unsubscribe();

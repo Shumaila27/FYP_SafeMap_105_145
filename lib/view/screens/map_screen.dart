@@ -2,9 +2,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart' as fm;
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:latlong2/latlong.dart';
 import '../../../Controller/map_controller.dart';
 import '../../../Models/map_model.dart';
 import '../../../Models/report_model.dart';
+import '../../../services/panic_service.dart';
 import '../../../utils/app_colors.dart';
 import '../widgets/app_bar.dart';
 import '../widgets/pani_button.dart';
@@ -47,6 +50,25 @@ class _MapScreenState extends State<MapScreen> {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           // FIX: now calls fm.MapController.move() — method exists
           _flutterMapController.move(controller.currentLatLng, 14);
+        });
+
+        // Check if there is an incoming walk alert to show a dialog
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (controller.showWalkAlert) {
+            final walkerName = controller.trackedWalkerName ?? 'Someone';
+            final destination = controller.trackedWalk?.destination ?? 'Destination';
+            
+            controller.dismissWalkAlert();
+            _showIncomingWalkDialog(context, walkerName, destination);
+          }
+        });
+
+        // Check if we should prompt the user to set/simulate their location
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (controller.showLocationPrompt) {
+            controller.showLocationPrompt = false; // Reset the flag so it doesn't prompt again
+            _showLocationChoiceDialog(context, controller);
+          }
         });
 
         return Scaffold(
@@ -168,6 +190,25 @@ class _MapScreenState extends State<MapScreen> {
                           )
                               .toList(),
                         ),
+
+                        // 4.6 ✅ NEW — Active SOS/Panic markers from other users
+                        fm.MarkerLayer(
+                          markers: controller.activeSOSAlerts
+                              .map(
+                                (alert) => fm.Marker(
+                              point:  LatLng(alert.latitude, alert.longitude),
+                              width:  60,
+                              height: 60,
+                              child: _SOSMarker(
+                                alert: alert,
+                                onTap: () {
+                                  _showSOSAlertSheet(context, alert);
+                                },
+                              ),
+                            ),
+                          )
+                              .toList(),
+                        ),
                       ],
                     ),
 
@@ -233,6 +274,122 @@ class _MapScreenState extends State<MapScreen> {
       backgroundColor: Colors.transparent,
       builder: (_) => _ClusterBottomSheet(cluster: cluster),
     ).whenComplete(controller.clearSelection);
+  }
+
+  void _showIncomingWalkDialog(
+      BuildContext context,
+      String walkerName,
+      String destination,
+      ) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Icon(Icons.shield, color: Theme.of(context).colorScheme.primary),
+            const SizedBox(width: 8),
+            const Text('Safe Walk Started'),
+          ],
+        ),
+        content: Text(
+          '$walkerName has started a Safe Walk to $destination and is sharing their live location with you.',
+          style: const TextStyle(fontSize: 15),
+        ),
+        actions: [
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.primary,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            child: const Text('Track Now'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showLocationChoiceDialog(BuildContext context, MapController controller) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Row(
+          children: [
+            Icon(Icons.location_on, color: Colors.teal),
+            SizedBox(width: 8),
+            Text('Set Your Location'),
+          ],
+        ),
+        content: const Text(
+          'Choose whether to use your device\'s live GPS location or simulate a location in Pakistan (recommended for emulator testing).',
+          style: TextStyle(fontSize: 15),
+        ),
+        actionsAlignment: MainAxisAlignment.center,
+        actions: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    controller.setLiveLocation();
+                  },
+                  icon: const Icon(Icons.gps_fixed),
+                  label: const Text('Use Live GPS Location'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Theme.of(context).colorScheme.primary,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                OutlinedButton.icon(
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    controller.setSimulatedLocation(
+                      30.1575,
+                      71.5249,
+                      'Multan, Pakistan',
+                    );
+                  },
+                  icon: const Icon(Icons.map_outlined),
+                  label: const Text('Simulate in Multan, Pakistan'),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                OutlinedButton.icon(
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    controller.setSimulatedLocation(
+                      33.6844,
+                      73.0479,
+                      'Islamabad, Pakistan',
+                    );
+                  },
+                  icon: const Icon(Icons.map_outlined),
+                  label: const Text('Simulate in Islamabad, Pakistan'),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -978,4 +1135,242 @@ class _ErrorBanner extends StatelessWidget {
       ),
     );
   }
+}
+
+// ── SOS Marker Widget & Details Sheet ────────────────────────────────────────
+
+class _SOSMarker extends StatefulWidget {
+  final PanicAlert alert;
+  final VoidCallback onTap;
+
+  const _SOSMarker({
+    required this.alert,
+    required this.onTap,
+  });
+
+  @override
+  State<_SOSMarker> createState() => _SOSMarkerState();
+}
+
+class _SOSMarkerState extends State<_SOSMarker>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _pulsar;
+
+  @override
+  void initState() {
+    super.initState();
+    _pulsar = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 1),
+      lowerBound: 0.7,
+      upperBound: 1.2,
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _pulsar.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: widget.onTap,
+      child: AnimatedBuilder(
+        animation: _pulsar,
+        builder: (context, _) {
+          return Center(
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                Container(
+                  width: 50 * _pulsar.value,
+                  height: 50 * _pulsar.value,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.red.withValues(alpha: 0.3),
+                  ),
+                ),
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.red,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black26,
+                        blurRadius: 4,
+                        offset: Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: const Icon(
+                    Icons.emergency,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+void _showSOSAlertSheet(BuildContext context, PanicAlert alert) {
+  final colorScheme = Theme.of(context).colorScheme;
+  showModalBottomSheet(
+    context: context,
+    backgroundColor: Colors.transparent,
+    builder: (context) {
+      return Container(
+        decoration: BoxDecoration(
+          color: colorScheme.surfaceContainerLowest,
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(24),
+            topRight: Radius.circular(24),
+          ),
+          boxShadow: const [
+            BoxShadow(
+              color: Colors.black12,
+              blurRadius: 10,
+              spreadRadius: 2,
+            ),
+          ],
+        ),
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 16),
+                decoration: BoxDecoration(
+                  color: colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.red.shade100,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.warning_amber_rounded,
+                    color: Colors.red,
+                    size: 28,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        '🚨 ACTIVE SOS ALERT',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.red,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'A nearby SafeMap user needs assistance.',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            Divider(color: colorScheme.outlineVariant),
+            const SizedBox(height: 12),
+            const Text(
+              'Safety Instructions:',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            _safetyRule(Icons.call, 'Call official emergency response (15) immediately.'),
+            const SizedBox(height: 6),
+            _safetyRule(Icons.people, 'Only approach the area if it is safe to do so.'),
+            const SizedBox(height: 6),
+            _safetyRule(Icons.remove_red_eye, 'Observe from a distance and assist authorities if needed.'),
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text('Dismiss'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () async {
+                      final Uri tel = Uri(scheme: 'tel', path: '15');
+                      if (await canLaunchUrl(tel)) {
+                        await launchUrl(tel);
+                      }
+                    },
+                    icon: const Icon(Icons.phone),
+                    label: const Text('Call 15'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+    },
+  );
+}
+
+Widget _safetyRule(IconData icon, String text) {
+  return Row(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Icon(icon, size: 16, color: Colors.grey.shade600),
+      const SizedBox(width: 10),
+      Expanded(
+        child: Text(
+          text,
+          style: const TextStyle(fontSize: 13, height: 1.3),
+        ),
+      ),
+    ],
+  );
 }

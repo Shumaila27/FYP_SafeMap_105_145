@@ -46,7 +46,7 @@ app.*.map.json
 
 #supasebase keys
 # .env - temporarily commented out for development
-# .env
+.env
 
 
 #agent files

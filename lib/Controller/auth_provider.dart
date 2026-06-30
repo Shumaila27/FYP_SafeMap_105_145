@@ -231,6 +231,7 @@ class AuthProvider extends ChangeNotifier {
 
   // ── Logout ────────────────────────────────────────────
   Future<void> logout() async {
+    await FCMService.instance.clearTokenInSupabase();
     await _authService.logout();
     _status = AuthStatus.idle;
     notifyListeners();

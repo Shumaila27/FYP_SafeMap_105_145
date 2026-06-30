@@ -16,6 +16,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../Models/guardian_model.dart';
+import 'fcm_service.dart';
 
 // ── Data models ──────────────────────────────────────────────
 
@@ -624,6 +625,7 @@ class ProfileService {
   // ════════════════════════════════════════════════════════
 
   Future<void> signOut() async {
+    await FCMService.instance.clearTokenInSupabase();
     await _client.auth.signOut();
   }
 

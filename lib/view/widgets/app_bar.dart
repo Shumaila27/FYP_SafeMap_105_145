@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import 'package:staysafe/view/screens/settings_screen.dart';
 import '../../utils/text_style.dart';
 
@@ -30,27 +30,27 @@ class AppMainBar extends StatelessWidget implements PreferredSizeWidget {
               icon: Icon(
                 Icons.arrow_back,
                 color: colorScheme.onPrimary,
-                size: 26.sp,
+                size: 26,
               ),
               onPressed: () {
                 Navigator.pop(context);
               },
             ),
 
-          if (showBack) SizedBox(width: 55.w),
+          if (showBack) SizedBox(width: 55),
 
           // ✅ Logo
           ClipOval(
             child: Image.asset(
               "assets/logo.png",
-              height: 45.h, // your height
-              width: 36.w, // your width
+              height: 45,
+              width: 36,
               fit: BoxFit
                   .cover, // ensures it covers the circle without distortion
             ),
           ),
 
-          SizedBox(width: 10.w),
+          SizedBox(width: 10),
 
           // ✅ App Name
           Text("SafeMap", style: AppTextStyle.bold(color: colorScheme.onPrimary)),
@@ -60,7 +60,7 @@ class AppMainBar extends StatelessWidget implements PreferredSizeWidget {
       // ✅ Settings Icon
       actions: [
         IconButton(
-          icon: Icon(Icons.settings, color: colorScheme.onPrimary, size: 28.sp),
+          icon: Icon(Icons.settings, color: colorScheme.onPrimary, size: 28),
           onPressed: () {
             Navigator.push(
               context,
@@ -73,5 +73,5 @@ class AppMainBar extends StatelessWidget implements PreferredSizeWidget {
   }
 
   @override
-  Size get preferredSize => Size.fromHeight(60.h);
+  Size get preferredSize => Size.fromHeight(60);
 }

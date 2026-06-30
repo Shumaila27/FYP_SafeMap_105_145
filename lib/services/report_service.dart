@@ -1,7 +1,34 @@
 // lib/services/report_service.dart
+//
+// ──────────────────────────────────────────────────────────────
+//  ReportService  (v2 — Report Validation Integration)
+//
+//  submitReport() now runs a two-stage validation pipeline:
+//
+//  Method 1 — AI Analysis (BEFORE DB insert)
+//    ReportValidationService calls Gemini 2.0 Flash with the image,
+//    description, category, location and timestamp.
+//    → Writes ai_score, ai_verdict, ai_reason to the report row.
+//
+//  Method 2 — Community Confirmation (AFTER DB insert, fire-and-forget)
+//    CommunityVoteService finds users within 5 km via PostGIS RPC and
+//    pushes FCM notifications asking "Did you witness this?"
+//    A 30-min Timer then calls finalize_report_validation() RPC to
+//    compute community_score + final_score + validation_status.
+//
+//  Final Score = (ai_score × 60%) + (community_score × 40%)
+//    80–100 → verified ✅   50–79 → pending_review ⏳   0–49 → flagged_fake ⚠️
+//
+//  All other public methods (getNearbyReports, getUserReports, etc.)
+//  are unchanged — existing callers need zero modifications.
+// ──────────────────────────────────────────────────────────────
+
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../Models/report_model.dart';
+import 'report_validation_service.dart';
+import 'community_vote_service.dart';
 
 // ── Custom Exceptions ──────────────────────────────────────────────────────
 
@@ -22,17 +49,18 @@ class ReportService {
 
   // ── Submit Report ──────────────────────────────────────────────────────────
   Future<ReportModel> submitReport({
-    required String categoryName,
-    required String severity,
-    required String description,
-    String? locationAddress,
-    double? latitude,
-    double? longitude,
-    DateTime? incidentTime,
-    File? imageFile,
-    bool isAnonymous = true,
+    required String  categoryName,
+    required String  severity,
+    required String  description,
+    String?          locationAddress,
+    double?          latitude,
+    double?          longitude,
+    DateTime?        incidentTime,
+    File?            imageFile,
+    bool             isAnonymous = true,
   }) async {
-    // 1. Resolve category name → UUID
+
+    // ── STEP 1: Resolve category name → UUID ────────────────────────────────
     String categoryId;
     try {
       final catRow = await _client
@@ -46,20 +74,20 @@ class ReportService {
           'Unknown incident category "$categoryName". Please try again.');
     }
 
-    // 2. Upload image before insert — track fileName for orphan cleanup
+    // ── STEP 2: Upload image (before insert — track name for orphan cleanup) ─
     String? imageUrl;
     String? uploadedFileName;
     if (imageFile != null) {
       try {
         uploadedFileName =
-        '${DateTime.now().millisecondsSinceEpoch}_${imageFile.path.split('/').last}';
+            '${DateTime.now().millisecondsSinceEpoch}_'
+            '${imageFile.path.split('/').last}';
 
-        // Upload the file — discard the returned path (it includes bucket name)
         await _client.storage
             .from('report_images')
             .upload(uploadedFileName, imageFile);
 
-        // ✅ FIX: Use uploadedFileName directly — NOT the returned path.
+        // Use uploadedFileName directly — NOT the returned path.
         // upload() returns "report_images/filename.jpg" which causes
         // getPublicUrl() to double the bucket name in the URL.
         imageUrl = _client.storage
@@ -69,23 +97,48 @@ class ReportService {
       } catch (e) {
         throw ImageUploadException(
             'Photo upload failed. Your report was not submitted. '
-                'Please try again or submit without a photo.');
+            'Please try again or submit without a photo.');
       }
     }
 
-    // 3. Insert report
+    // ── STEP 3: AI Validation — Method 1 (BEFORE DB insert) ─────────────────
+    // On any API failure, neutral score (50) is returned and submission proceeds.
+    AiValidationResult aiResult;
+    try {
+      debugPrint('[ReportService] Running AI validation…');
+      aiResult = await ReportValidationService.instance.analyseReport(
+        categoryName:    categoryName,
+        description:     description,
+        locationAddress: locationAddress,
+        incidentTime:    incidentTime,
+        imageFile:       imageFile,
+      );
+      debugPrint('[ReportService] AI result: $aiResult');
+    } catch (e) {
+      debugPrint('[ReportService] AI validation threw unexpectedly: $e');
+      aiResult = AiValidationResult.neutral();
+    }
+
+    // ── STEP 4: Insert report WITH AI scores ─────────────────────────────────
+    ReportModel report;
     try {
       final reportData = {
-        'category_id': categoryId,
-        'severity': severity,
-        'description': description.isEmpty ? null : description,
-        'location_address': locationAddress,
-        'latitude': latitude,
-        'longitude': longitude,
-        'incident_time': (incidentTime ?? DateTime.now()).toIso8601String(),
-        'image_url': imageUrl,
-        'is_anonymous': isAnonymous,
-        'status': 'pending',
+        'category_id':       categoryId,
+        'severity':          severity,
+        'description':       description.isEmpty ? null : description,
+        'location_address':  locationAddress,
+        'latitude':          latitude,
+        'longitude':         longitude,
+        'incident_time':     (incidentTime ?? DateTime.now()).toIso8601String(),
+        'image_url':         imageUrl,
+        'is_anonymous':      isAnonymous,
+        'status':            'pending',
+        // Method 1 — AI validation (stored immediately)
+        'ai_score':          aiResult.aiScore,
+        'ai_verdict':        aiResult.verdict,
+        'ai_reason':         aiResult.reason,
+        // Method 2 columns are written later by finalize_report_validation()
+        'validation_status': 'pending_review',
       };
 
       final response = await _client
@@ -94,7 +147,7 @@ class ReportService {
           .select()
           .single();
 
-      return ReportModel.fromSupabase(response);
+      report = ReportModel.fromSupabase(response);
     } catch (e) {
       // Orphan cleanup — delete the uploaded image if the DB insert failed
       if (uploadedFileName != null) {
@@ -107,6 +160,29 @@ class ReportService {
       throw ReportSubmitException(
           'Failed to save your report. Please check your connection and try again.');
     }
+
+    // ── STEP 5: Community voting — fire-and-forget (Method 2) ───────────────
+    // Only possible when GPS coordinates are available.
+    // Runs asynchronously — errors here never affect the returned report.
+    if (latitude != null && longitude != null && report.id != null) {
+      final reportId = report.id!;
+
+      // 5a. Push FCM notifications to nearby users (ignore errors)
+      CommunityVoteService.instance.notifyNearbyUsers(
+        reportId:     reportId,
+        latitude:     latitude,
+        longitude:    longitude,
+        categoryName: categoryName,
+        description:  description,
+      ).catchError((e) {
+        debugPrint('[ReportService] Community notify failed (non-fatal): $e');
+      });
+
+      // 5b. Schedule finalize_report_validation() RPC in 30 minutes
+      CommunityVoteService.instance.scheduleFinalization(reportId);
+    }
+
+    return report;
   }
 
   // ── Get Nearby Reports (PostGIS RPC + Pagination) ─────────────────────────
@@ -114,17 +190,17 @@ class ReportService {
     required double latitude,
     required double longitude,
     double radiusKm = 5.0,
-    int page = 0,
+    int page     = 0,
     int pageSize = 50,
   }) async {
     try {
       final response = await _client.rpc(
         'get_nearby_reports',
         params: {
-          'user_lat': latitude,
-          'user_lng': longitude,
-          'radius_m': radiusKm * 1000, // km → metres for ST_DWithin
-          'page_limit': pageSize,
+          'user_lat':    latitude,
+          'user_lng':    longitude,
+          'radius_m':    radiusKm * 1000,   // km → metres for ST_DWithin
+          'page_limit':  pageSize,
           'page_offset': page * pageSize,
         },
       );
@@ -187,6 +263,8 @@ class ReportService {
   // ── Delete Report ──────────────────────────────────────────────────────────
   Future<void> deleteReport(String reportId) async {
     try {
+      // Cancel any pending community vote finalization timer first
+      CommunityVoteService.instance.cancelFinalization(reportId);
       await _client.from('reports').delete().eq('id', reportId);
     } catch (e) {
       rethrow;

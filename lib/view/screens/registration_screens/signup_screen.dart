@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import 'package:provider/provider.dart';
 import 'package:staysafe/view/screens/dashboard.dart';
 import 'package:staysafe/view/screens/registration_screens/login_screen.dart';
@@ -10,6 +10,7 @@ import '../../widgets/header.dart';
 import '../../widgets/text_fields.dart';
 import '../../../Controller/auth_provider.dart';
 import '../../../Models/auth_model.dart';
+import '../../../services/fcm_service.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -64,6 +65,11 @@ class _SignupScreenState extends State<SignupScreen> {
     if (!mounted) return;
 
     if (success) {
+      // Save FCM token first so notifications reach this device
+      await FCMService.instance.saveTokenToSupabase();
+
+      if (!mounted) return;
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Account created successfully! Welcome to SafeWalk!'),
@@ -99,19 +105,19 @@ class _SignupScreenState extends State<SignupScreen> {
         child: LayoutBuilder(
           builder: (context, constraints) {
             final bool compact = constraints.maxHeight < 840;
-            final double vGap = compact ? 10.h : 14.h;
+            final double vGap = compact ? 10 : 14;
 
             return Form(
               key: _formKey,
               child: Column(
                 children: [
                   AuthHeader(
-                    height: compact ? 110.h : 150.h,
-                    topWaveHeight: compact ? 88.h : 120.h,
+                    height: compact ? 110 : 150,
+                    topWaveHeight: compact ? 88 : 120,
                   ),
                   Expanded(
                     child: Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 24.w),
+                      padding: EdgeInsets.symmetric(horizontal: 24),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
@@ -124,7 +130,7 @@ class _SignupScreenState extends State<SignupScreen> {
                                   color: AppColor.appSecondary,
                                 ),
                               ),
-                              SizedBox(height: 4.h),
+                              SizedBox(height: 4),
                               Text(
                                 'Sign up to get started',
                                 style: AppTextStyle.semiBold(
@@ -253,7 +259,7 @@ class _SignupScreenState extends State<SignupScreen> {
                                 ),
                                 Padding(
                                   padding: EdgeInsets.symmetric(
-                                    horizontal: 10.w,
+                                    horizontal: 10,
                                   ),
                                   child: Text(
                                     "or continue with",
@@ -283,8 +289,8 @@ class _SignupScreenState extends State<SignupScreen> {
                               );
                             },
                             icon: Container(
-                              height: 26.h,
-                              width: 26.w,
+                              height: 26,
+                              width: 26,
                               decoration: const BoxDecoration(
                                 shape: BoxShape.circle,
                                 color: Colors.white,
@@ -301,7 +307,7 @@ class _SignupScreenState extends State<SignupScreen> {
                                     color: colorScheme.onSurface,
                                   ).copyWith(
                                     fontWeight: FontWeight.w600,
-                                    fontSize: 14.sp,
+                                    fontSize: 14,
                                   ),
                             ),
                             style:
@@ -315,15 +321,15 @@ class _SignupScreenState extends State<SignupScreen> {
                                   surfaceTintColor:
                                       colorScheme.surfaceContainerLowest,
                                   shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(35.r),
+                                    borderRadius: BorderRadius.circular(35),
                                     side: const BorderSide(
                                       color: Color(0xFFE0E0E0),
                                       width: 1,
                                     ),
                                   ),
                                   padding: EdgeInsets.symmetric(
-                                    vertical: 10.h,
-                                    horizontal: 14.w,
+                                    vertical: 10,
+                                    horizontal: 14,
                                   ),
                                 ).copyWith(
                                   overlayColor: WidgetStatePropertyAll(

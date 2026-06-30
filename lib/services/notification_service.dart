@@ -65,8 +65,16 @@ class NotificationService {
             'android': {
               'priority': 'high',
               'notification': {
-                'sound':       'default',
+                'sound':        'default',
                 'click_action': 'FLUTTER_NOTIFICATION_CLICK',
+                'channel_id':   'community_vote',
+              },
+            },
+            'apns': {
+              'payload': {
+                'aps': {
+                  'sound': 'default',
+                },
               },
             },
           },
@@ -198,4 +206,75 @@ class NotificationService {
       debugPrint('[FCM] notifyEmergency error: $e');
     }
   }
+
+  // ── Send Nearby SOS notification ────────────────────────────
+  Future<void> notifyNearbyUsersSOS({
+    required double lat,
+    required double lng,
+    required List<String> fcmTokens,
+  }) async {
+    if (fcmTokens.isEmpty) return;
+
+    try {
+      debugPrint('[FCM] Sending SOS alert to ${fcmTokens.length} nearby users');
+      for (final token in fcmTokens) {
+        await _sendToToken(
+          fcmToken: token,
+          title:    '🚨 NEARBY SOS ALERT',
+          body:     'A nearby SafeMap user has triggered an SOS alert! Tap to open map.',
+          data: {
+            'type':   'nearby_sos',
+            'lat':    lat.toString(),
+            'lng':    lng.toString(),
+            'screen': 'map',
+          },
+        );
+      }
+    } catch (e) {
+      debugPrint('[FCM] notifyNearbyUsersSOS error: $e');
+    }
+  }
+
+  // ── Send Community Vote notification (report validation) ─────────────────
+  /// Sends "Did you witness this?" notifications to nearby users so they
+  /// can confirm or deny a newly submitted incident report.
+  ///
+  /// Called exclusively by [CommunityVoteService.notifyNearbyUsers] —
+  /// this keeps all FCM sending logic inside [NotificationService].
+  Future<void> notifyNearbyUsersCommunityVote({
+    required String       reportId,
+    required String       categoryName,
+    required String       description,
+    required List<String> fcmTokens,
+  }) async {
+    if (fcmTokens.isEmpty) return;
+
+    try {
+      debugPrint(
+        '[FCM] Sending community vote notification to '
+        '${fcmTokens.length} nearby users for report $reportId',
+      );
+
+      for (final token in fcmTokens) {
+        await _sendToToken(
+          fcmToken: token,
+          title:    '🔍 Incident Near You — Did You See This?',
+          body:     '${_capitalize(categoryName)}: $description',
+          data: {
+            'type':          'community_vote',
+            'report_id':     reportId,
+            'category_name': categoryName,   // ✅ NEW — passed to VoteScreen
+            'description':   description,    // ✅ NEW — passed to VoteScreen
+            'screen':        'vote',
+          },
+        );
+      }
+    } catch (e) {
+      debugPrint('[FCM] notifyNearbyUsersCommunityVote error: $e');
+    }
+  }
+
+  // ── Helper ────────────────────────────────────────────────────────────────
+  String _capitalize(String s) =>
+      s.isEmpty ? s : s[0].toUpperCase() + s.substring(1);
 }

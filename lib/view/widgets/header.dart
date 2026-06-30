@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import '../../utils/app_colors.dart';
 
 /// ✅ Custom Painter that draws a wavy header
@@ -63,7 +63,7 @@ class AuthHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       width: double.infinity,
-      height: height ?? 180.h,
+      height: height ?? 180,
       child: Stack(
         children: [
           // ✅ Light wave (background)
@@ -79,7 +79,7 @@ class AuthHeader extends StatelessWidget {
             left: 0,
             right: 0,
             child: SizedBox(
-              height: topWaveHeight ?? 150.h,
+              height: topWaveHeight ?? 150,
               child: CustomPaint(
                 painter: WavyHeaderPainter(AppColor.appSecondary),
               ),
@@ -89,13 +89,13 @@ class AuthHeader extends StatelessWidget {
           // ✅ Back Button (visible if true)
           if (showBackButton)
             Positioned(
-              top: 30.h,
-              left: 15.w,
+              top: 30,
+              left: 15,
               child: GestureDetector(
                 onTap: () => Navigator.pop(context),
                 child: Icon(
                   Icons.arrow_back,
-                  size: 28.sp,
+                  size: 28,
                   color: Colors.white,
                 ),
               ),

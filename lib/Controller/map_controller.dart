@@ -11,6 +11,7 @@ import '../services/report_service.dart';
 import '../services/safety_score_service.dart';
 import '../services/map_cluster_service.dart';
 import '../services/safe_walk_service.dart'; // ✅ NEW
+import '../services/panic_service.dart';
 
 class MapController extends ChangeNotifier {
   // ── Dependencies ───────────────────────────────────────────────────────────
@@ -70,16 +71,37 @@ class MapController extends ChangeNotifier {
   LatLng?   walkerLatLng;
   DateTime? walkerLastUpdate;
   bool      isWalkEmergency = false;
+  bool      showWalkAlert = false;
+  bool      hasPromptedLocation = false;
+  bool      showLocationPrompt = false;
+  bool      isMockLocation = false;
 
   StreamSubscription<Map<String, dynamic>>? _walkEventSub;
+  StreamSubscription<List<SafeWalk>>?      _assignedWalksSub;
+
+  // ── Panic Mode State ──
+  bool isPanicActive = false;
+  String? activePanicAlertId;
+  List<PanicAlert> activeSOSAlerts = [];
+  StreamSubscription<List<PanicAlert>>? _panicAlertsSub;
 
   // ── Init ───────────────────────────────────────────────────────────────────
 
   Future<void> init() async {
-    await _acquireLocation();
+    // Flag the UI to show the location choice prompt on first load
+    if (!hasPromptedLocation) {
+      showLocationPrompt = true;
+      hasPromptedLocation = true;
+    }
+
+    if (!isMockLocation) {
+      await _acquireLocation();
+    }
     await loadArea(currentLatLng);
     _subscribeRealtime();
     await refreshTrackedWalk(); // ✅ NEW — check for active assigned walk
+    _subscribeToAssignedWalks();
+    _subscribeToPanicAlerts();
   }
 
   // ── Location ───────────────────────────────────────────────────────────────
@@ -117,6 +139,7 @@ class MapController extends ChangeNotifier {
 
       currentLatLng  = LatLng(position.latitude, position.longitude);
       currentAddress = await _reverseGeocode(currentLatLng);
+      await _updateLastLocationInProfile(currentLatLng);
     } catch (_) {
       currentAddress = 'Location unavailable';
     }
@@ -323,26 +346,76 @@ class MapController extends ChangeNotifier {
         return;
       }
 
-      // For FYP scope: track the most recently started active walk.
-      final walk = walks.first;
-
-      // Already tracking this exact walk — nothing to do.
-      if (trackedWalk?.id == walk.id) return;
-
-      trackedWalk      = walk;
-      walkerLatLng     = (walk.currentLat != null && walk.currentLng != null)
-          ? LatLng(walk.currentLat!, walk.currentLng!)
-          : null;
-      walkerLastUpdate = walk.lastUpdated;
-      isWalkEmergency  = walk.isEmergency;
-
-      trackedWalkerName = await _fetchWalkerName(walk.userId);
-
-      _subscribeToWalkEvents(walk.id);
-      notifyListeners();
+      await _updateTrackedWalk(walks.first);
     } catch (e) {
       debugPrint('[MapController] refreshTrackedWalk error: $e');
     }
+  }
+
+  Future<void> _updateTrackedWalk(SafeWalk walk) async {
+    if (trackedWalk?.id == walk.id) return;
+
+    final isFirstTime = trackedWalk == null;
+
+    trackedWalk      = walk;
+    walkerLatLng     = (walk.currentLat != null && walk.currentLng != null)
+        ? LatLng(walk.currentLat!, walk.currentLng!)
+        : null;
+    walkerLastUpdate = walk.lastUpdated;
+    isWalkEmergency  = walk.isEmergency;
+
+    trackedWalkerName = await _fetchWalkerName(walk.userId);
+
+    _subscribeToWalkEvents(walk.id);
+
+    if (isFirstTime) {
+      showWalkAlert = true;
+    }
+    notifyListeners();
+  }
+
+  void _subscribeToAssignedWalks() {
+    _assignedWalksSub?.cancel();
+    _assignedWalksSub = SafeWalkService.instance
+        .guardianActiveWalksStream()
+        .listen((walks) async {
+      if (walks.isEmpty) {
+        if (trackedWalk != null) {
+          _clearTrackedWalk();
+          notifyListeners();
+        }
+        return;
+      }
+
+      await _updateTrackedWalk(walks.first);
+    });
+  }
+
+  void dismissWalkAlert() {
+    showWalkAlert = false;
+    notifyListeners();
+  }
+
+  void setSimulatedLocation(double lat, double lng, String address) {
+    isMockLocation = true;
+    currentLatLng = LatLng(lat, lng);
+    currentAddress = address;
+
+    // Set mock coordinates in SafeWalkService too
+    SafeWalkService.instance.isMockLocation = true;
+    SafeWalkService.instance.mockLat = lat;
+    SafeWalkService.instance.mockLng = lng;
+
+    _updateLastLocationInProfile(currentLatLng);
+    loadArea(currentLatLng);
+    notifyListeners();
+  }
+
+  void setLiveLocation() async {
+    isMockLocation = false;
+    SafeWalkService.instance.isMockLocation = false;
+    await _acquireLocation();
+    loadArea(currentLatLng);
   }
 
   Future<String> _fetchWalkerName(String userId) async {
@@ -489,13 +562,83 @@ class MapController extends ChangeNotifier {
     });
   }
 
+  // ── Panic Mode Actions & Subscriptions ─────────────────────────────────────
+
+  void _subscribeToPanicAlerts() {
+    _panicAlertsSub?.cancel();
+    _panicAlertsSub = PanicService.instance
+        .activePanicAlertsStream()
+        .listen((alerts) {
+      final myUid = _supabase.auth.currentUser?.id;
+      activeSOSAlerts = alerts
+          .where((alert) => alert.userId != myUid)
+          .toList();
+      notifyListeners();
+    });
+  }
+
+  Future<void> _updateLastLocationInProfile(LatLng latLng) async {
+    try {
+      final myUid = _supabase.auth.currentUser?.id;
+      if (myUid == null) return;
+      await _supabase.from('profiles').update({
+        'last_lat': latLng.latitude,
+        'last_lng': latLng.longitude,
+        'last_located_at': DateTime.now().toIso8601String(),
+      }).eq('id', myUid);
+      debugPrint('[MapController] Profile location updated in Supabase: $latLng');
+    } catch (e) {
+      debugPrint('[MapController] Error updating profile location: $e');
+    }
+  }
+
+  Future<void> triggerPanicMode() async {
+    try {
+      isPanicActive = true;
+      notifyListeners();
+
+      final alert = await PanicService.instance.triggerPanicMode(
+        currentLatLng.latitude,
+        currentLatLng.longitude,
+      );
+      activePanicAlertId = alert.id;
+      debugPrint('[MapController] Panic mode triggered: ${alert.id}');
+    } catch (e) {
+      isPanicActive = false;
+      debugPrint('[MapController] triggerPanicMode error: $e');
+      errorMessage = 'Failed to activate Panic Mode: $e';
+    }
+    notifyListeners();
+  }
+
+  Future<void> resolvePanicMode() async {
+    if (activePanicAlertId == null) {
+      isPanicActive = false;
+      notifyListeners();
+      return;
+    }
+
+    try {
+      await PanicService.instance.resolvePanicMode(activePanicAlertId!);
+      activePanicAlertId = null;
+      isPanicActive = false;
+      debugPrint('[MapController] Panic mode resolved');
+    } catch (e) {
+      debugPrint('[MapController] resolvePanicMode error: $e');
+      errorMessage = 'Failed to resolve Panic Mode: $e';
+    }
+    notifyListeners();
+  }
+
   // ── Dispose ────────────────────────────────────────────────────────────────
 
   @override
   void dispose() {
     _realtimeDebounce?.cancel();
     _realtimeChannel?.unsubscribe();
-    _walkEventSub?.cancel(); // ✅ NEW
+    _walkEventSub?.cancel();
+    _assignedWalksSub?.cancel();
+    _panicAlertsSub?.cancel();
     super.dispose();
   }
 }

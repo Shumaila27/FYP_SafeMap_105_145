@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import 'package:staysafe/utils/text_style.dart';
 
 class CustomTextField extends StatefulWidget {
@@ -69,18 +69,18 @@ class _CustomTextFieldState extends State<CustomTextField> {
         fillColor: colorScheme.surface, // Background color
 
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(30.r),
+          borderRadius: BorderRadius.circular(30),
           borderSide: BorderSide(color: colorScheme.primary),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(30.r),
+          borderRadius: BorderRadius.circular(30),
           borderSide: BorderSide(
             color: colorScheme.primary,
             width: 3,
           ),
         ),
         contentPadding:
-        EdgeInsets.symmetric(horizontal: 20.h, vertical: 15),
+        EdgeInsets.symmetric(horizontal: 20, vertical: 15),
       ),
     );
   }

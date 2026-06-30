@@ -1,9 +1,11 @@
 // lib/view/screens/auth_checker_screen.dart
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../screens/registration_screens/login_screen.dart';
 import '../screens/dashboard.dart';
 import '../../services/fcm_service.dart';
+import '../../Controller/map_controller.dart';
 
 class AuthCheckerScreen extends StatefulWidget {
   const AuthCheckerScreen({super.key});
@@ -28,13 +30,20 @@ class _AuthCheckerScreenState extends State<AuthCheckerScreen> {
     final session = Supabase.instance.client.auth.currentSession;
 
     if (session != null) {
-      // User is logged in, navigate to Dashboard
+      // User is logged in — save FCM token first so notifications reach this device
       await FCMService.instance.saveTokenToSupabase();
+      if (!mounted) return;
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (_) => const DashBoardScreen()),
         (route) => false,
       );
+      // After navigation, check if this user is a guardian for an active walk.
+      // Small delay allows MapController.init() to finish first.
+      await Future.delayed(const Duration(seconds: 2));
+      if (mounted) {
+        context.read<MapController>().refreshTrackedWalk();
+      }
     } else {
       // User is not logged in, navigate to Login
       Navigator.pushAndRemoveUntil(

@@ -1,5 +1,6 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../Controller/map_controller.dart';
 import 'buttons.dart';
 
 class PanicButton extends StatefulWidget {
@@ -11,8 +12,8 @@ class PanicButton extends StatefulWidget {
 
 class _PanicButtonState extends State<PanicButton>
     with SingleTickerProviderStateMixin {
-  bool isPanicActive = false;
   bool showConfirm = false;
+  bool showResolveConfirm = false;
 
   // Animation for pulsing effect
   late AnimationController _pulseController;
@@ -34,28 +35,29 @@ class _PanicButtonState extends State<PanicButton>
     super.dispose();
   }
 
-  void activatePanic() {
-    setState(() => isPanicActive = true);
-
-    // Auto turn off after 30 seconds
-    Timer(const Duration(seconds: 30), () {
-      if (mounted) {
-        setState(() => isPanicActive = false);
-      }
-    });
+  void handlePanicClick(MapController mapCtrl) {
+    if (mapCtrl.isPanicActive) {
+      setState(() => showResolveConfirm = true);
+    } else {
+      setState(() => showConfirm = true);
+    }
   }
 
-  void handlePanicClick() {
-    setState(() => showConfirm = true);
-  }
-
-  void confirmPanic() {
+  void confirmPanic(MapController mapCtrl) {
     setState(() => showConfirm = false);
-    activatePanic();
+    mapCtrl.triggerPanicMode();
+  }
+
+  void confirmResolve(MapController mapCtrl) {
+    setState(() => showResolveConfirm = false);
+    mapCtrl.resolvePanicMode();
   }
 
   @override
   Widget build(BuildContext context) {
+    final mapCtrl = context.watch<MapController>();
+    final isPanicActive = mapCtrl.isPanicActive;
+
     return Stack(
       children: [
         // 🔴 Red overlay when panic active
@@ -63,7 +65,12 @@ class _PanicButtonState extends State<PanicButton>
           AnimatedBuilder(
             animation: _pulseController,
             builder: (_, child) {
-              return Opacity(opacity: 0.2, child: Container(color: Colors.red));
+              return Opacity(
+                opacity: 0.15,
+                child: Container(
+                  color: Colors.red,
+                ),
+              );
             },
           ),
 
@@ -72,7 +79,7 @@ class _PanicButtonState extends State<PanicButton>
           bottom: 10,
           left: 10,
           child: GestureDetector(
-            onTap: handlePanicClick,
+            onTap: () => handlePanicClick(mapCtrl),
             child: AnimatedBuilder(
               animation: _pulseController,
               builder: (_, child) {
@@ -112,73 +119,137 @@ class _PanicButtonState extends State<PanicButton>
             child: Material(
               color: Colors.black54,
               child: Container(
-                margin: const EdgeInsets.all(10),
-                padding: const EdgeInsets.all(10),
+                margin: const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: Theme.of(context).colorScheme.surface,
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Text(
-                      "Activate Panic Mode?",
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text(
+                        "Activate Panic Mode?",
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 10),
-                    const Text(
-                      "This will immediately:",
-                      style: TextStyle(fontSize: 15),
-                    ),
+                      const SizedBox(height: 10),
+                      const Text(
+                        "This will immediately:",
+                        style: TextStyle(fontSize: 15),
+                      ),
+                      const SizedBox(height: 20),
+                      // list items
+                      _infoItem(Icons.location_pin, "Send your live location to guardians"),
+                      const SizedBox(height: 8),
+                      _infoItem(
+                        Icons.phone_in_talk,
+                        "Alert nearby SafeMap users",
+                      ),
+                      const SizedBox(height: 8),
+                      _infoItem(Icons.mic, "Start recording audio evidence (local)"),
 
-                    const SizedBox(height: 20),
+                      const SizedBox(height: 24),
 
-                    // list items
-                    _infoItem(Icons.location_pin, "Send your live location"),
-                    _infoItem(
-                      Icons.phone_in_talk,
-                      "Alert nearby SafeMap users",
-                    ),
-                    _infoItem(Icons.mic, "Start recording audio evidence"),
-
-                    const SizedBox(height: 15),
-
-                    // Buttons using YOUR CustomButton
-                    Row(
-                      children: [
-                        Expanded(
-                          child: CustomButton(
-                            text: "Cancel",
-                            textColor: Colors.black,
-                            buttonColor: Colors.grey.shade300,
-                            onPressed: () {
-                              setState(() => showConfirm = false);
-                            },
-                            fontSize: 14,
+                      Row(
+                        children: [
+                          Expanded(
+                            child: CustomButton(
+                              text: "Cancel",
+                              textColor: Colors.black,
+                              buttonColor: Colors.grey.shade300,
+                              onPressed: () {
+                                setState(() => showConfirm = false);
+                              },
+                              fontSize: 14,
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: CustomButton(
-                            text: "Activate",
-                            textColor: Colors.white,
-                            buttonColor: Colors.red,
-                            onPressed: confirmPanic,
-                            fontSize: 14,
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: CustomButton(
+                              text: "Activate",
+                              textColor: Colors.white,
+                              buttonColor: Colors.red,
+                              onPressed: () => confirmPanic(mapCtrl),
+                              fontSize: 14,
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      const Text(
+                        "For immediate police assistance, call 15",
+                        style: TextStyle(fontSize: 12, color: Colors.grey),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
 
-                    const SizedBox(height: 10),
-                    const Text(
-                      "For immediate police assistance, call 15",
-                      style: TextStyle(fontSize: 12, color: Colors.grey),
-                    ),
-                  ],
+        // 🟢 Resolve Confirmation Dialog
+        if (showResolveConfirm)
+          Center(
+            child: Material(
+              color: Colors.black54,
+              child: Container(
+                margin: const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surface,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.check_circle_outline, color: Colors.green, size: 48),
+                      const SizedBox(height: 16),
+                      const Text(
+                        "Are you safe now?",
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        "This will resolve the SOS alert and notify your guardians that you are safe.",
+                        style: TextStyle(fontSize: 14),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 24),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: CustomButton(
+                              text: "Cancel",
+                              textColor: Colors.black,
+                              buttonColor: Colors.grey.shade300,
+                              onPressed: () {
+                                setState(() => showResolveConfirm = false);
+                              },
+                              fontSize: 14,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: CustomButton(
+                              text: "I am Safe",
+                              textColor: Colors.white,
+                              buttonColor: Colors.green,
+                              onPressed: () => confirmResolve(mapCtrl),
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),

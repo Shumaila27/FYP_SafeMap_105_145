@@ -16,10 +16,9 @@ class CustomNavBar extends StatelessWidget {
     return buildMyNavBar(context);
   }
 
-  Container buildMyNavBar(BuildContext context) {
+  Widget buildMyNavBar(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     return Container(
-      height: 70,
       decoration: BoxDecoration(
         color: colorScheme.primary,
         borderRadius: const BorderRadius.only(
@@ -27,9 +26,12 @@ class CustomNavBar extends StatelessWidget {
           topRight: Radius.circular(20),
         ),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
           _navItem(
             icon: Icons.location_on,
             label: "Map",
@@ -61,6 +63,8 @@ class CustomNavBar extends StatelessWidget {
             onPrimary: colorScheme.onPrimary,
           ),
         ],
+          ),
+        ),
       ),
     );
   }
@@ -81,6 +85,7 @@ class CustomNavBar extends StatelessWidget {
         onTap(index);
       },
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(

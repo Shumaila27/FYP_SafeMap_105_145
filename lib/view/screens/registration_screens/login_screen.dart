@@ -1,7 +1,7 @@
 // lib/view/screens/registrat.../login_screen.dart
 
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import 'package:provider/provider.dart';
 import 'package:staysafe/view/screens/dashboard.dart';
 import 'signup_screen.dart';
@@ -11,7 +11,9 @@ import '../../widgets/buttons.dart';
 import '../../widgets/header.dart';
 import '../../widgets/text_fields.dart';
 import '../../../Controller/auth_provider.dart';
+import '../../../Controller/map_controller.dart';
 import '../../../Models/auth_model.dart';
+import '../../../services/fcm_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -55,6 +57,11 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!mounted) return;
 
     if (success) {
+      // Save FCM token first so notifications reach this device
+      await FCMService.instance.saveTokenToSupabase();
+      
+      if (!mounted) return;
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Login successful! Welcome back!'),
@@ -68,6 +75,12 @@ class _LoginScreenState extends State<LoginScreen> {
         MaterialPageRoute(builder: (_) => const DashBoardScreen()),
         (route) => false,
       );
+      // Check if this user is a guardian for an active Safe Walk.
+      // Delay allows MapController.init() to finish first.
+      await Future.delayed(const Duration(seconds: 2));
+      if (mounted) {
+        context.read<MapController>().refreshTrackedWalk();
+      }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -95,12 +108,12 @@ class _LoginScreenState extends State<LoginScreen> {
               child: Column(
                 children: [
                   AuthHeader(
-                    height: compact ? 120.h : 160.h,
-                    topWaveHeight: compact ? 95.h : 130.h,
+                    height: compact ? 120 : 160,
+                    topWaveHeight: compact ? 95 : 130,
                   ),
                   Expanded(
                     child: Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 24.w),
+                      padding: EdgeInsets.symmetric(horizontal: 24),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
@@ -113,7 +126,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   color: AppColor.appSecondary,
                                 ),
                               ),
-                              SizedBox(height: 6.h),
+                              SizedBox(height: 6),
                               Text(
                                 'Login to your account',
                                 style: AppTextStyle.semiBold(
@@ -203,7 +216,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                                 Padding(
                                   padding: EdgeInsets.symmetric(
-                                    horizontal: 10.w,
+                                    horizontal: 10,
                                   ),
                                   child: Text(
                                     "or continue with",
@@ -233,8 +246,8 @@ class _LoginScreenState extends State<LoginScreen> {
                               );
                             },
                             icon: Container(
-                              height: 26.h,
-                              width: 26.w,
+                              height: 26,
+                              width: 26,
                               decoration: const BoxDecoration(
                                 shape: BoxShape.circle,
                                 color: Colors.white,
@@ -251,7 +264,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     color: colorScheme.onSurface,
                                   ).copyWith(
                                     fontWeight: FontWeight.w600,
-                                    fontSize: 14.sp,
+                                    fontSize: 14,
                                   ),
                             ),
                             style:
@@ -265,15 +278,15 @@ class _LoginScreenState extends State<LoginScreen> {
                                   surfaceTintColor:
                                       colorScheme.surfaceContainerLowest,
                                   shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(35.r),
+                                    borderRadius: BorderRadius.circular(35),
                                     side: const BorderSide(
                                       color: Color(0xFFE0E0E0),
                                       width: 1,
                                     ),
                                   ),
                                   padding: EdgeInsets.symmetric(
-                                    vertical: 10.h,
-                                    horizontal: 14.w,
+                                    vertical: 10,
+                                    horizontal: 14,
                                   ),
                                 ).copyWith(
                                   overlayColor: WidgetStatePropertyAll(
